@@ -122,6 +122,9 @@ Outcome:
 - `.gitignore`: `!data/processed/results.json` — the real results are now committed so CI can build the site; demo results stay ignored.
 - README Pages section updated. Pages itself is still not enabled (plan limit, see above); the branch is kept current regardless.
 
+### Post-run — GitHub Pages live            2026-11-19
+The repository was found **public** (visibility changed outside this session). Pages on a public repo is available on the free plan, so Pages was enabled from `gh-pages` (root). Site: https://jctec.github.io/mushroom-livability/ — status `built`; index, assets and `api/results` return 200; headless Chrome render `data-ready="true"`, no banner, real verdict; download button → `/releases/latest` → v1.0.0 (200 for anonymous visitors).
+
 ### Step 10 — Close out            2026-11-19
 - KNOWN_RISKS statuses updated; nothing left at ⚠️. Open: A11–A13 (WorldPop service gone), A16 (forest share lower bound), S6 (real-browser checklist).
 - README status note replaced by the "Executed on 2026-11-19" statement with the verdict.
