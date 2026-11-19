@@ -90,10 +90,11 @@ Actions (asked the user at each methodology decision):
 5. `python main.py pipeline` re-run from cache (40 s; only the 40 WorldPop 404s went to the network) so that `results.json` carries the updated source text. Scores, ranks, raw values, verdict and exclusions are byte-for-byte identical to the first full run.
 Net code change: documentation strings in `src/data/habitat.py` only.
 
-### Step 8 — Web page test            2026-11-19 (in progress)
+### Step 8 — Web page test            2026-11-19 (not completed)
 Command(s): `python main.py serve --no-browser`
 HTTP-level checks done: `/` 200; `/healthz` → `{"results_available": true, "status": "ok"}`; `/api/results` 200, payload identical to results.json, `synthetic: false`, `partial: false`.
-Browser checklist: **not yet run** — the Claude-in-Chrome extension was not connected (checked 6 times between 10:45 and 12:35). Waiting for the user to connect Chrome.
+Browser checklist: **NOT RUN.** The Claude-in-Chrome extension was never connected (checked 7 times between 10:45 and 12:45); the session was closed by the user before it connected. No checklist item is claimed as passed and there are no checklist screenshots.
+Partial evidence only: headless-Chrome render of the static export (results of this run) → `data-ready="true"`, real verdict, no demo/partial banner, download button present (screenshot of the top of the page; not stored in the repo). Server stopped at close-out.
 
 ### Step 9 — Paper            2026-11-19
 1. `paper/interpretation.tex` written (4 paragraphs: Paris/Amsterdam gap, what the leaders share, Canada, caveats specific to this run). No typed numbers (macros and table/figure references only); each claim checked against results.json (e.g. Amsterdam's density lead comes from fungal share 0.095 vs 0.033 and GBIF 114 vs 5.78 rec/km² while iNaturalist obs/km² are 4.62 vs 4.09; Halifax/Montreal/Quebec City/Toronto climate points all below the European median 13.2). Placeholder removed.
@@ -116,12 +117,18 @@ Outcome:
 - **GitHub Pages NOT enabled:** `POST /repos/JCTec/mushroom-livability/pages` → HTTP 422 "Your current plan does not support GitHub Pages for this repository." Pages on a private repo needs a paid plan; visibility was not changed without the user.
 - Release `v1.0.0` (latest) with `mushroom-livability-data-2026-11-19.zip` (426 KB: results.json, paper.pdf, paper fragments, EXECUTION_LOG.md, README with licences). The download button's target (`/releases/latest`) answers 404 to anonymous visitors while the repo is private.
 
-### Step 10 — Close out
+### Step 10 — Close out            2026-11-19
+- KNOWN_RISKS statuses updated; nothing left at ⚠️. Open: A11–A13 (WorldPop service gone), A16 (forest share lower bound), S6 (real-browser checklist).
+- README status note replaced by the "Executed on 2026-11-19" statement with the verdict.
+- Local server stopped. GitHub Pages left disabled (plan does not allow Pages on the private repo; no visibility change).
 
 ## Deviations from the documented method
 
-(none yet)
+- **None to weights, thresholds, scalers, radius or location list.**
+- Coverage-rule outcome (documented behaviour, not a deviation): sub-metric "Observations per 100k residents" dropped for all 40 locations because WorldPop was unavailable; observation-density weights renormalised within the component (obs/km² 12.5 %, fungal share 6.25 %, GBIF 6.25 %).
+- Forest-share query: a correction was tried and **reverted** (step 7b); the executed query is the documented build-phase query. Its known bias is documented as a limitation, not patched.
 
 ## Final verdict
 
-(to be copied from the app after the real run)
+"Amsterdam is the better base for a mushroom lover: 60.7 vs 57.4 out of 100 for Paris. The biggest advantage is observation density (+7.6 points). Paris does better on seasonal reliability (+6.7 points)."
+Overall leader: Berlin, Germany (78.5). Best Canadian city: Vancouver (72.3, rank 3). Amsterdam ranks 11th, Paris 13th of 40.
