@@ -110,6 +110,11 @@ Changes made (file — what — why — test):
 - `.gitignore` — `site/`, `paper/*.synctex.gz`.
 - README (dedication line, `site` command, Pages section), ARCHITECTURE (static_site).
 Verification: 48 tests OK. `python main.py pipeline` re-run from cache to add `download_url`: scores, ranks, raw values, components, verdict and exclusions identical. Paper rebuilt (0 errors, 0 overfull). Static export served under `/mushroom-livability/` locally: all files 200; headless Chrome render shows `data-ready="true"`, the real verdict and the button href. (Headless smoke test only — not the Step 8 checklist.)
+Outcome:
+- Repository `JCTec/mushroom-livability` created **private**; `main` pushed (65 files; `.venv`, `data/cache`, `data/processed` git-ignored; no secrets found by scan). Commit author: global git identity (user's choice). Push over SSH as JCTec.
+- `gh-pages` branch pushed with the static export (5 files).
+- **GitHub Pages NOT enabled:** `POST /repos/JCTec/mushroom-livability/pages` → HTTP 422 "Your current plan does not support GitHub Pages for this repository." Pages on a private repo needs a paid plan; visibility was not changed without the user.
+- Release `v1.0.0` (latest) with `mushroom-livability-data-2026-11-19.zip` (426 KB: results.json, paper.pdf, paper fragments, EXECUTION_LOG.md, README with licences). The download button's target (`/releases/latest`) answers 404 to anonymous visitors while the repo is private.
 
 ### Step 10 — Close out
 
