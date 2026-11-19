@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mushroom Livability — where should a mushroom lover live?</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="static/app.css">
+</head>
+<body>
+  <div id="banner" class="banner" hidden role="alert"></div>
+
+  <header class="hero">
+    <p class="eyebrow">Mushroom Livability Score</p>
+    <h1>Where is the most strategic place to live as a mushroom lover?</h1>
+    <p id="verdict" class="verdict">Loading results…</p>
+    <p id="meta" class="meta"></p>
+    <p class="actions"><a id="download" class="button" hidden>Download the data</a></p>
+  </header>
+
+  <main id="content" hidden>
+    <section id="duel" aria-labelledby="duel-title">
+      <h2 id="duel-title">Head to head</h2>
+      <p class="lede" id="duel-lede"></p>
+      <div id="duel-body"></div>
+    </section>
+
+    <section id="ranking" aria-labelledby="ranking-title">
+      <h2 id="ranking-title">The full ranking</h2>
+      <p class="lede">Every location scored out of 100. Each bar is split into what each
+        ingredient contributes. Select a row to see its breakdown.</p>
+      <div class="filters" role="group" aria-label="Filter locations">
+        <div id="chips" class="chips"></div>
+        <input id="search" type="search" placeholder="Search a city or country" aria-label="Search a city or country">
+      </div>
+      <div id="legend" class="legend" aria-label="Score ingredients"></div>
+      <div class="table-wrap">
+        <table id="rank-table">
+          <thead>
+            <tr><th class="num">#</th><th>Location</th><th>Country</th><th class="num">Score</th><th>What makes up the score</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="rank-empty" class="muted" hidden>No location matches this filter.</p>
+    </section>
+
+    <section id="detail" aria-labelledby="detail-title">
+      <div class="detail-head">
+        <h2 id="detail-title">Score breakdown</h2>
+        <label class="select-label">Location
+          <select id="detail-select"></select>
+        </label>
+      </div>
+      <div id="detail-body"></div>
+    </section>
+
+    <section id="seasons" aria-labelledby="seasons-title">
+      <h2 id="seasons-title">When the season runs</h2>
+      <p class="lede">Share of each location's yearly observations that falls in each month.
+        Darker means more of the year's finds happen then. Follows the filter above.</p>
+      <div id="calendar"></div>
+    </section>
+
+    <section id="method" aria-labelledby="method-title">
+      <h2 id="method-title">How the score works</h2>
+      <div id="model"></div>
+      <div id="coverage"></div>
+      <h3>Data sources</h3>
+      <p class="lede">Open, public data only.</p>
+      <ul id="sources" class="sources"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built from open data. Scores describe recorded observations and climate, not a guarantee of a full basket.
+       Never eat a wild mushroom on the strength of an app.</p>
+  </footer>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <script src="static/app.js"></script>
+</body>
+</html>

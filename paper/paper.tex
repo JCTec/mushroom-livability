@@ -1,0 +1,261 @@
+% Mushroom Livability - paper.
+%
+% Build:   cd paper && latexmk -pdf paper.tex      (or: pdflatex paper.tex, twice)
+%
+% Every number, table and figure is \input from paper/generated/, which is
+% written by `python main.py pipeline` (or `python main.py paper`).
+% Do not type results into this file by hand.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage[hidelinks]{hyperref}
+
+\IfFileExists{generated/macros.tex}{\input{generated/macros.tex}}{%
+  \GenericError{}{Missing generated/macros.tex}{Run `python main.py pipeline` (or `python main.py paper`) first.}{}}
+
+\newcommand{\MLSscore}{Mushroom Livability Score}
+
+\title{Where Should a Mushroom Lover Live?\\[4pt]
+\large A transparent, open-data livability score for Paris, Amsterdam,\\ thirty other European cities and eight Canadian benchmarks}
+\author{Pastel project}
+\date{Data retrieved \MLSGeneratedDate}
+
+\begin{document}
+\maketitle
+
+\ifMLSsynthetic
+\begin{center}
+\fcolorbox{red}{red!8}{\parbox{0.9\textwidth}{\centering\textbf{SYNTHETIC DEMO BUILD.}
+The numbers in this document are pseudo-random placeholders produced by the demo mode.
+They are not results. Re-run the pipeline without \texttt{--demo}.}}
+\end{center}
+\fi
+
+\begin{abstract}
+\noindent We ask where a person who loves finding wild mushrooms should live. We combine five ingredients
+--- how many fungi are recorded, how many species, for how much of the year, how favourable the climate is
+and how much woodland is nearby --- into a single \MLSscore{} between 0 and 100, computed identically for
+\MLSNumLocations{} locations from open data only (iNaturalist, GBIF, ERA5 via Open-Meteo, WorldPop and
+OpenStreetMap). Every score decomposes exactly into the contributions of its ingredients.
+In the head-to-head that motivates the study, \MLSHeadlineWinner{} scores \MLSHeadlineWinnerScore{} and
+\MLSHeadlineLoser{} scores \MLSHeadlineLoserScore{}. Across all \MLSNumScored{} scored locations the highest
+score is \MLSLeaderScore{} (\MLSLeaderName{}, \MLSLeaderCountry{}); the best Canadian benchmark is
+\MLSBestBenchmarkName{} (\MLSBestBenchmarkScore{}). The code, the cached API responses and this paper are
+reproducible from a single command.
+\end{abstract}
+
+\section{Introduction}
+
+``Where should I live?'' is usually answered with rents, salaries and commute times. For someone whose
+weekends are spent looking for fungi the relevant questions are different: is there much to find near
+home, is it varied, does the season last, and is there forest within reach? This paper turns those
+questions into a small, auditable index.
+
+The headline comparison is between Paris and Amsterdam. To give that comparison context, the same method
+is applied to major cities across Germany and Central Europe, the Nordic countries, the United Kingdom and
+Ireland, Southern Europe, France and the Benelux, and --- as a long-distance benchmark --- to eight
+Canadian cities.
+
+Two design principles guided the work. First, \emph{openness}: only public, openly licensed data are used,
+and every request made to a data provider is stored with its URL and retrieval time. Second,
+\emph{explainability}: the score is a weighted sum of a few interpretable quantities, so that any ranking
+can be traced back to the numbers that produced it.
+
+\section{Data}\label{sec:data}
+
+A location is defined as the disc of radius \MLSRadiusKm{}~km (area \MLSAreaKm{}~km\textsuperscript{2})
+around a city centre: roughly what can be reached on a half-day trip without a long journey.
+All quantities below refer to that disc.
+
+\paragraph{iNaturalist (primary).} Research-grade observations of the kingdom Fungi (iNaturalist taxon
+47170, which includes lichens) are queried through the public API~\cite{inat}. We retrieve the total number
+of fungal observations, the total number of research-grade observations of all taxa, the number of distinct
+fungal taxa, the distribution of observations over the twelve months of the year, and the coordinates of
+the \MLSSampleCap{} most recently added records (used only for the density maps in the web application).
+
+\paragraph{GBIF (secondary).} The number of georeferenced occurrence records of kingdom Fungi without
+geospatial issues is retrieved from the GBIF occurrence API~\cite{gbif}. GBIF adds museum specimens and
+national recording schemes; it also contains iNaturalist's research-grade export, so the two sources
+overlap and are not independent.
+
+\paragraph{Climate.} Daily mean 2~m temperature and daily precipitation for \MLSClimatePeriod{} come from the
+ERA5 reanalysis~\cite{era5} through the Open-Meteo historical weather API~\cite{openmeteo}, and are reduced
+to twelve monthly normals (mean temperature, mean monthly precipitation total).
+
+\paragraph{Population.} The number of residents inside the disc is obtained from the WorldPop
+100~m gridded population surface for \MLSWorldPopYear{}~\cite{worldpop} using the WorldPop statistics service.
+
+\paragraph{Habitat.} The share of the disc covered by woodland is estimated from
+OpenStreetMap~\cite{osm} by point sampling: a regular lattice of points is tested for membership of
+polygons tagged \texttt{landuse=forest} or \texttt{natural=wood}, and the share of points inside woodland
+estimates the mapped woodland share.
+
+\section{Method}\label{sec:method}
+
+\subsection{Metrics}
+
+Let $N_f$ be the number of research-grade fungal observations, $N_a$ the number of research-grade
+observations of all taxa, $S$ the number of fungal taxa, $G$ the GBIF record count, $P$ the population and
+$A$ the area of the disc. The metrics are
+\begin{align*}
+d_{\text{area}} &= N_f / A, & d_{\text{cap}} &= 10^5\, N_f / P, & d_{\text{share}} &= N_f / N_a, & d_{\text{gbif}} &= G / A .
+\end{align*}
+The per-capita rate keeps large cities from winning on headcount alone, and the fungal share corrects for
+differences in how widely iNaturalist is used: a region with many users has many records of everything.
+
+\paragraph{Seasonal reliability.} With $n_m$ the number of observations in calendar month $m$ and
+$N_f=\sum_m n_m$, a month is \emph{reliable} when $n_m/N_f \ge 0.04$ and $n_m \ge 10$. The metric is the
+number of reliable months $R\in\{0,\dots,12\}$. A perfectly even year would put $8.3\%$ in each month, so
+the threshold asks for roughly half of an even share; the absolute floor prevents sparsely recorded
+places from appearing reliable.
+
+\paragraph{Climate suitability.} For each month with mean temperature $T_m$ (\textdegree C) and precipitation
+$P_m$ (mm) we define
+\[
+ s_m = \tau(T_m)\cdot \min\!\left(1, \frac{P_m}{80}\right),\qquad
+ \tau(T)=\begin{cases}
+ 0 & T\le 0 \ \text{or}\ T \ge 26\\
+ T/8 & 0<T<8\\
+ 1 & 8\le T\le 18\\
+ (26-T)/8 & 18<T<26
+ \end{cases}
+\]
+and the climate suitability index is $C=\tfrac{1}{12}\sum_m s_m$. The window reflects the broad finding
+that fruiting of most temperate macrofungi requires mild temperatures together with sufficient
+moisture~\cite{boddy}; it is a deliberately simple heuristic, not a fitted model.
+
+\paragraph{Habitat.} $F$ is the woodland share of the disc as described in Section~\ref{sec:data}.
+
+\subsection{Normalisation and aggregation}
+
+The count-like metrics ($d_{\text{area}}$, $d_{\text{cap}}$, $d_{\text{share}}$, $d_{\text{gbif}}$ and $S$) are heavy-tailed.
+They are transformed with $\log(1+x)$ and then scaled linearly so that the weakest scored location receives
+0 and the strongest 1. Bounded metrics are scaled against a fixed ceiling: $R/12$, $C/1$ and
+$\min(1, F/0.6)$. Writing $\tilde{x}$ for a normalised metric, the score of a location is
+\[
+ \text{MLS} = 100 \sum_{c} w_c \sum_{m\in c} w_{c,m}\, \tilde{x}_{m},
+\]
+with component weights $w_c$ and within-component weights $w_{c,m}$ each summing to one.
+Table~\ref{tab:model} lists the weights that were actually used in this run.
+
+\begin{table}[ht]
+\centering\footnotesize
+\input{generated/model_table.tex}
+\caption{Components, sub-metrics and effective weights (as a share of the total score).}
+\label{tab:model}
+\end{table}
+
+\subsection{Missing data}
+
+Three rules, applied before any arithmetic, keep scores comparable. (i)~A location lacking a required
+metric ($d_{\text{area}}$, $S$, $R$ or $C$) is not scored. (ii)~An optional metric that is unavailable for
+any scored location is dropped for all locations. (iii)~If a component loses all of its metrics it is
+dropped and the remaining weights are rescaled proportionally. The outcome of these rules for the present
+run is reported in Section~\ref{sec:coverage}.
+
+\section{Results}
+
+\subsection{Summary of findings}
+
+\input{generated/findings.tex}
+
+\subsection{Paris and Amsterdam}
+
+Table~\ref{tab:h2h} compares the two headline cities ingredient by ingredient. Bold rows give the points
+each component contributes to the total; the rows beneath show the underlying raw metrics.
+
+\begin{table}[ht]
+\centering\small
+\input{generated/headtohead_table.tex}
+\caption{Head-to-head comparison of the headline cities (higher-scoring city first).}
+\label{tab:h2h}
+\end{table}
+
+\subsection{All locations}
+
+Figure~\ref{fig:contrib} shows how the leading scores are composed and Table~\ref{tab:ranking} gives the
+complete ranking.
+
+\begin{figure}[ht]
+\centering
+\input{generated/contributions_figure.tex}
+\caption{Composition of the \MLSscore{} for the highest-ranked locations and the headline cities.
+Segment lengths are points contributed by each component.}
+\label{fig:contrib}
+\end{figure}
+
+\begin{table}[p]
+\centering\footnotesize\setlength{\tabcolsep}{4.5pt}
+\input{generated/ranking_table.tex}
+\caption{Full ranking. Headline cities in bold, Canadian benchmarks in italics. Component columns are
+points contributed to the score.}
+\label{tab:ranking}
+\end{table}
+
+\subsection{Coverage of this run}\label{sec:coverage}
+
+\input{generated/coverage.tex}
+
+\section{Discussion}
+
+\input{interpretation.tex}
+
+\subsection{Limitations}
+
+\begin{itemize}
+\item \textbf{Observer effort.} Citizen-science records measure where people look as much as where fungi
+grow~\cite{isaac}. The fungal-share and per-capita metrics reduce, but do not remove, this bias. A high
+score means ``many fungi are recorded here'', which is evidence of, not identical to, ``many fungi grow here''.
+\item \textbf{Relative scaling.} Count-like metrics are scaled between the weakest and strongest location in
+the comparison set, so adding or removing locations changes scores (though rarely the order of two
+given cities).
+\item \textbf{Source overlap.} GBIF includes iNaturalist's research-grade export; the GBIF metric is
+therefore partly redundant with the iNaturalist metrics and carries a small weight.
+\item \textbf{Heuristic climate model.} The temperature and moisture windows are simple expert-style
+heuristics applied to monthly normals; they ignore humidity, soil, altitude within the disc and year-to-year
+variability.
+\item \textbf{Habitat completeness.} OpenStreetMap woodland mapping varies in completeness between
+countries, and the lattice estimate has a sampling error of several percentage points.
+\item \textbf{Weights.} The component weights are a transparent judgement, not an estimate. Because
+contributions are reported separately, readers can re-weight them.
+\item \textbf{Scope.} Lichens are included in the iNaturalist Fungi taxon. Edibility, access rights and
+foraging regulations are outside the scope of this study.
+\end{itemize}
+
+\section{Reproducibility}
+
+\begin{sloppypar}
+The project is a plain Python package with two runtime dependencies. \texttt{python main.py pipeline}
+retrieves all data (responses are cached together with their URL and retrieval time), computes the scores
+and regenerates every table, figure and number in this paper; \texttt{python main.py} then serves an
+interactive web application with density maps and per-location breakdowns. Methodological parameters live
+in \texttt{src/settings.py} and the scoring model in \texttt{src/scoring/components.py}.
+\end{sloppypar}
+
+\begin{thebibliography}{9}
+\bibitem{inat} iNaturalist. Research-grade observations, accessed through the iNaturalist API v1.
+\url{https://www.inaturalist.org}. Retrieved \MLSGeneratedDate.
+\bibitem{gbif} GBIF.org. GBIF Occurrence Search API, kingdom Fungi. \url{https://www.gbif.org}.
+Retrieved \MLSGeneratedDate.
+\bibitem{era5} Hersbach, H., et al. (2020). The ERA5 global reanalysis. \emph{Quarterly Journal of the
+Royal Meteorological Society}, 146(730), 1999--2049.
+\bibitem{openmeteo} Zippenfenig, P. (2023). Open-Meteo.com Weather API. Zenodo.
+\url{https://open-meteo.com}.
+\bibitem{worldpop} WorldPop (\url{https://www.worldpop.org}), School of Geography and Environmental Science,
+University of Southampton. Global high-resolution population denominators, 2000--2020.
+\bibitem{osm} OpenStreetMap contributors. \url{https://www.openstreetmap.org/copyright}. Data available
+under the Open Database Licence.
+\bibitem{boddy} Boddy, L., et al. (2014). Climate variation effects on fungal fruiting.
+\emph{Fungal Ecology}, 10, 20--33.
+\bibitem{isaac} Isaac, N. J. B., and Pocock, M. J. O. (2015). Bias and information in biological records.
+\emph{Biological Journal of the Linnean Society}, 115(3), 522--531.
+\end{thebibliography}
+
+\end{document}

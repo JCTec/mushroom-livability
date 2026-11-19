@@ -1,0 +1,3 @@
+# Runtime dependencies - deliberately short. See README "Dependencies".
+requests>=2.31,<3      # HTTP client for the open data APIs
+flask>=3.0,<4          # tiny web layer serving the single-page app
