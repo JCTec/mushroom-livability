@@ -117,6 +117,11 @@ Outcome:
 - **GitHub Pages NOT enabled:** `POST /repos/JCTec/mushroom-livability/pages` → HTTP 422 "Your current plan does not support GitHub Pages for this repository." Pages on a private repo needs a paid plan; visibility was not changed without the user.
 - Release `v1.0.0` (latest) with `mushroom-livability-data-2026-11-19.zip` (426 KB: results.json, paper.pdf, paper fragments, EXECUTION_LOG.md, README with licences). The download button's target (`/releases/latest`) answers 404 to anonymous visitors while the repo is private.
 
+### Post-run — automatic gh-pages updates (user request)            2026-11-19
+- `.github/workflows/gh-pages.yml`: on every push to `main` (and manual dispatch): install, run the tests, `python main.py site`, force-push the export to `gh-pages` with `GITHUB_TOKEN` (`contents: write`). No pipeline/API calls in CI.
+- `.gitignore`: `!data/processed/results.json` — the real results are now committed so CI can build the site; demo results stay ignored.
+- README Pages section updated. Pages itself is still not enabled (plan limit, see above); the branch is kept current regardless.
+
 ### Step 10 — Close out            2026-11-19
 - KNOWN_RISKS statuses updated; nothing left at ⚠️. Open: A11–A13 (WorldPop service gone), A16 (forest share lower bound), S6 (real-browser checklist).
 - README status note replaced by the "Executed on 2026-11-19" statement with the verdict.

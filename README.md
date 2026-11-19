@@ -106,7 +106,11 @@ One page, no build step, no external assets:
 ### Hosted copy (GitHub Pages)
 
 The page is also published as a static site from the `gh-pages` branch:
-<https://jctec.github.io/mushroom-livability/>. It is produced by `python main.py site` from the
+<https://jctec.github.io/mushroom-livability/>. The workflow `.github/workflows/gh-pages.yml` rebuilds
+that branch on **every push to `main`**: it runs the tests, then `python main.py site` on the committed
+`data/processed/results.json` (the real results are versioned for this; CI never calls the data
+providers), then force-replaces `gh-pages`. To publish new results, run the pipeline locally and
+commit `results.json`. The site is produced from the
 same `results.json`, and the page's asset and data URLs are relative, so the same page works at `/` (Flask) and
 under `/<repo>/` (Pages). The **Download the data** button links to the latest GitHub release
 (`Settings.download_url`), which carries `results.json`, the paper and the execution log as a zip.

@@ -5,6 +5,8 @@ data/cache/*
 data/processed/*
 !data/cache/.gitkeep
 !data/processed/.gitkeep
+# The real results are versioned so CI can publish the site without calling the APIs.
+!data/processed/results.json
 paper/generated/*
 !paper/generated/.gitkeep
 paper/*.aux
