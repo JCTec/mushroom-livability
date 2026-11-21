@@ -23,9 +23,9 @@
 \newcommand{\MLSscore}{Mushroom Livability Score}
 
 \title{Where Should a Mushroom Lover Live?\\[4pt]
-\large A transparent, open-data livability score for Paris, Amsterdam,\\ thirty other European cities and eight Canadian benchmarks}
+\large A transparent, open-data livability score for \MLSNumLocations{} cities\\ in Europe and Canada, compared on equal terms}
 \author{Pastel project}
-\date{Data retrieved \MLSGeneratedDate}
+\date{Data retrieved \MLSRetrievedDate}
 
 \begin{document}
 \maketitle
@@ -44,10 +44,10 @@ They are not results. Re-run the pipeline without \texttt{--demo}.}}
 and how much woodland is nearby --- into a single \MLSscore{} between 0 and 100, computed identically for
 \MLSNumLocations{} locations from open data only (iNaturalist, GBIF, ERA5 via Open-Meteo, WorldPop and
 OpenStreetMap). Every score decomposes exactly into the contributions of its ingredients.
-In the head-to-head that motivates the study, \MLSHeadlineWinner{} scores \MLSHeadlineWinnerScore{} and
-\MLSHeadlineLoser{} scores \MLSHeadlineLoserScore{}. Across all \MLSNumScored{} scored locations the highest
-score is \MLSLeaderScore{} (\MLSLeaderName{}, \MLSLeaderCountry{}); the best Canadian benchmark is
-\MLSBestBenchmarkName{} (\MLSBestBenchmarkScore{}). The code, the cached API responses and this paper are
+No location is singled out in advance. Across all \MLSNumScored{} scored locations the highest score is
+\MLSLeaderScore{} (\MLSLeaderName{}, \MLSLeaderCountry{}), followed by \MLSRunnerUpScore{}
+(\MLSRunnerUpName{}, \MLSRunnerUpCountry{}); we also report the best location of each of the
+\MLSNumGroups{} regions. The code, the cached API responses and this paper are
 reproducible from a single command.
 \end{abstract}
 
@@ -58,10 +58,10 @@ weekends are spent looking for fungi the relevant questions are different: is th
 home, is it varied, does the season last, and is there forest within reach? This paper turns those
 questions into a small, auditable index.
 
-The headline comparison is between Paris and Amsterdam. To give that comparison context, the same method
-is applied to major cities across Germany and Central Europe, the Nordic countries, the United Kingdom and
-Ireland, Southern Europe, France and the Benelux, and --- as a long-distance benchmark --- to eight
-Canadian cities.
+The method is applied identically to major cities in six regions: Canada, France and the Benelux, Germany
+and Central Europe, the Nordic countries, Southern Europe, and the United Kingdom and Ireland. No city or
+country is a reference point or a favourite: every location is a peer, the answer is whichever ranks first,
+and regions are listed alphabetically throughout.
 
 Two design principles guided the work. First, \emph{openness}: only public, openly licensed data are used,
 and every request made to a data provider is stored with its URL and retrieval time. Second,
@@ -166,16 +166,29 @@ run is reported in Section~\ref{sec:coverage}.
 
 \input{generated/findings.tex}
 
-\subsection{Paris and Amsterdam}
+\subsection{The two highest-ranked locations}
 
-Table~\ref{tab:h2h} compares the two headline cities ingredient by ingredient. Bold rows give the points
-each component contributes to the total; the rows beneath show the underlying raw metrics.
+Table~\ref{tab:h2h} compares the first- and second-ranked locations ingredient by ingredient. Bold rows
+give the points each component contributes to the total; the rows beneath show the underlying raw metrics.
+The web application offers the same comparison for any pair of locations.
 
 \begin{table}[ht]
 \centering\small
 \input{generated/headtohead_table.tex}
-\caption{Head-to-head comparison of the headline cities (higher-scoring city first).}
+\caption{The two highest-ranked locations, ingredient by ingredient (higher-scoring location first).}
 \label{tab:h2h}
+\end{table}
+
+\subsection{Regions}
+
+Table~\ref{tab:regions} gives the highest-scoring location of every region.
+
+\begin{table}[ht]
+\centering\small
+\input{generated/regions_table.tex}
+\caption{Best location per region (regions in alphabetical order). \emph{Scored} is the number of scored
+locations in the region; \emph{Rank} is the overall rank among all scored locations.}
+\label{tab:regions}
 \end{table}
 
 \subsection{All locations}
@@ -186,7 +199,7 @@ complete ranking.
 \begin{figure}[ht]
 \centering
 \input{generated/contributions_figure.tex}
-\caption{Composition of the \MLSscore{} for the highest-ranked locations and the headline cities.
+\caption{Composition of the \MLSscore{} for the highest-ranked locations.
 Segment lengths are points contributed by each component.}
 \label{fig:contrib}
 \end{figure}
@@ -194,8 +207,7 @@ Segment lengths are points contributed by each component.}
 \begin{table}[p]
 \centering\footnotesize\setlength{\tabcolsep}{4.5pt}
 \input{generated/ranking_table.tex}
-\caption{Full ranking. Headline cities in bold, Canadian benchmarks in italics. Component columns are
-points contributed to the score.}
+\caption{Full ranking. Component columns are points contributed to the score.}
 \label{tab:ranking}
 \end{table}
 
@@ -241,9 +253,9 @@ in \texttt{src/settings.py} and the scoring model in \texttt{src/scoring/compone
 
 \begin{thebibliography}{9}
 \bibitem{inat} iNaturalist. Research-grade observations, accessed through the iNaturalist API v1.
-\url{https://www.inaturalist.org}. Retrieved \MLSGeneratedDate.
+\url{https://www.inaturalist.org}. Retrieved \MLSRetrievedDate.
 \bibitem{gbif} GBIF.org. GBIF Occurrence Search API, kingdom Fungi. \url{https://www.gbif.org}.
-Retrieved \MLSGeneratedDate.
+Retrieved \MLSRetrievedDate.
 \bibitem{era5} Hersbach, H., et al. (2020). The ERA5 global reanalysis. \emph{Quarterly Journal of the
 Royal Meteorological Society}, 146(730), 1999--2049.
 \bibitem{openmeteo} Zippenfenig, P. (2023). Open-Meteo.com Weather API. Zenodo.

@@ -15,13 +15,22 @@
     <h1>Where is the most strategic place to live as a mushroom lover?</h1>
     <p id="verdict" class="verdict">Loading results…</p>
     <p id="meta" class="meta"></p>
+    <div id="regions" class="regions" aria-label="Best location in each region"></div>
     <p class="actions"><a id="download" class="button" hidden>Download the data</a></p>
   </header>
 
   <main id="content" hidden>
     <section id="duel" aria-labelledby="duel-title">
-      <h2 id="duel-title">Head to head</h2>
+      <h2 id="duel-title">Compare two locations</h2>
       <p class="lede" id="duel-lede"></p>
+      <div class="pickers" role="group" aria-label="Choose two locations to compare">
+        <label class="select-label">First
+          <select id="compare-a"></select>
+        </label>
+        <label class="select-label">Second
+          <select id="compare-b"></select>
+        </label>
+      </div>
       <div id="duel-body"></div>
     </section>
 

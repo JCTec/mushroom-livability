@@ -102,11 +102,22 @@ class CachedJsonHttp:
     Each cache file stores the payload *and* its provenance (method, URL,
     parameters, retrieval time), so `data/cache/` doubles as the complete
     record of how every number was obtained.
+
+    It also remembers the retrieval time of every response it hands out
+    (cached or new), so a run from cache reports when the data was really
+    fetched, not when the results file was built.
     """
 
     def __init__(self, inner: JsonHttp, cache_dir: Path):
         self._inner = inner
         self._dir = Path(cache_dir)
+        self._fetched_at: list = []
+
+    def retrieval_window(self) -> Optional[dict]:
+        """{"first", "last"} ISO timestamps of the responses served so far, or None."""
+        if not self._fetched_at:
+            return None
+        return {"first": min(self._fetched_at), "last": max(self._fetched_at)}
 
     def get_json(self, url: str, params: Optional[dict] = None, *, cache_if: CacheIf = None) -> Any:
         return self._cached("GET", url, params or {}, cache_if, lambda: self._inner.get_json(url, params))
@@ -123,15 +134,20 @@ class CachedJsonHttp:
         path = self._path(method, url, params)
         if path.exists():
             with path.open("r", encoding="utf-8") as handle:
-                return json.load(handle)["payload"]
+                record = json.load(handle)
+            if record.get("fetched_at"):
+                self._fetched_at.append(record["fetched_at"])
+            return record["payload"]
         payload = fetch()
+        fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        self._fetched_at.append(fetched_at)
         if cache_if is None or cache_if(payload):
             path.parent.mkdir(parents=True, exist_ok=True)
             record = {
                 "method": method,
                 "url": url,
                 "params": {str(k): str(v) for k, v in params.items()},
-                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "fetched_at": fetched_at,
                 "payload": payload,
             }
             tmp = path.with_suffix(".tmp")

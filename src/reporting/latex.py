@@ -6,7 +6,8 @@ results file through this module, so the PDF can never drift from the data.
 Fragments written to paper/generated/:
     macros.tex          scalar facts as \\MLS... macros
     ranking_table.tex   full ranking with per-component contributions
-    headtohead_table.tex  Paris vs Amsterdam, metric by metric
+    headtohead_table.tex  rank 1 vs rank 2, metric by metric
+    regions_table.tex   best location of every region (regions alphabetical)
     model_table.tex     effective weights actually used
     contributions_figure.tex  stacked-bar figure (plain TikZ)
     findings.tex        factual summary sentences
@@ -60,6 +61,7 @@ def write_fragments(results: dict, out_dir: Path) -> list:
         "macros.tex": macros(results),
         "ranking_table.tex": ranking_table(results),
         "headtohead_table.tex": headtohead_table(results),
+        "regions_table.tex": regions_table(results),
         "model_table.tex": model_table(results),
         "contributions_figure.tex": contributions_figure(results),
         "findings.tex": findings(results),
@@ -84,6 +86,19 @@ def _by_id(results: dict) -> dict:
     return {l["id"]: l for l in results["locations"]}
 
 
+def retrieval_dates(results: dict) -> str:
+    """When the provider data was fetched: one date, or "first – last" if it spans several days.
+
+    Falls back to the build date only when the results carry no retrieval window
+    (synthetic data, or a results file written before the window was recorded).
+    """
+    window = results.get("data_retrieved")
+    if not window:
+        return results["generated_at"][:10]
+    first, last = window["first"][:10], window["last"][:10]
+    return first if first == last else f"{first} – {last}"
+
+
 def _macro(name: str, value) -> str:
     return f"\\newcommand{{\\MLS{name}}}{{{value}}}"
 
@@ -99,6 +114,7 @@ def macros(results: dict) -> str:
         "\\newif\\ifMLSsynthetic",
         "\\MLSsynthetictrue" if results["synthetic"] else "\\MLSsyntheticfalse",
         _macro("GeneratedDate", tex_escape(results["generated_at"][:10])),
+        _macro("RetrievedDate", tex_escape(retrieval_dates(results))),
         _macro("RadiusKm", fmt(settings["radius_km"], 0)),
         _macro("AreaKm", fmt(settings["area_km2"], 0)),
         _macro("ClimatePeriod", tex_escape(settings["climate_period"])),
@@ -107,30 +123,17 @@ def macros(results: dict) -> str:
         _macro("NumLocations", len(results["locations"])),
         _macro("NumScored", len(scored)),
         _macro("NumComponents", len(results["model"])),
+        _macro("NumGroups", len(results["groups"])),
     ]
-    leader = by_id.get(verdict.get("leader_id"))
-    lines.append(_macro("LeaderName", tex_escape(leader["name"]) if leader else "n/a"))
-    lines.append(_macro("LeaderCountry", tex_escape(leader["country"]) if leader else "n/a"))
-    lines.append(_macro("LeaderScore", fmt(leader["score"]) if leader else "--"))
-
-    headline = verdict.get("headline")
-    winner = by_id.get(headline["winner_id"]) if headline else None
-    loser = by_id.get(headline["loser_id"]) if headline else None
-    lines += [
-        _macro("HeadlineWinner", tex_escape(winner["name"]) if winner else "n/a"),
-        _macro("HeadlineLoser", tex_escape(loser["name"]) if loser else "n/a"),
-        _macro("HeadlineWinnerScore", fmt(winner["score"]) if winner else "--"),
-        _macro("HeadlineLoserScore", fmt(loser["score"]) if loser else "--"),
-        _macro("HeadlineWinnerRank", winner["rank"] if winner else "--"),
-        _macro("HeadlineLoserRank", loser["rank"] if loser else "--"),
-        _macro("HeadlineMargin", fmt(headline["margin"]) if headline else "--"),
-    ]
-    bench = by_id.get(verdict.get("best_by_role", {}).get("benchmark"))
-    lines += [
-        _macro("BestBenchmarkName", tex_escape(bench["name"]) if bench else "n/a"),
-        _macro("BestBenchmarkScore", fmt(bench["score"]) if bench else "--"),
-        _macro("BestBenchmarkRank", bench["rank"] if bench else "--"),
-    ]
+    for prefix, loc in (("Leader", by_id.get(verdict.get("leader_id"))),
+                        ("RunnerUp", by_id.get(verdict.get("runner_up_id")))):
+        lines += [
+            _macro(f"{prefix}Name", tex_escape(loc["name"]) if loc else "n/a"),
+            _macro(f"{prefix}Country", tex_escape(loc["country"]) if loc else "n/a"),
+            _macro(f"{prefix}Score", fmt(loc["score"]) if loc else "--"),
+        ]
+    top = verdict.get("top")
+    lines.append(_macro("TopMargin", fmt(top["margin"]) if top else "--"))
     for key, color in results["palette"]["components"].items():
         lines.append(f"\\definecolor{{mls{key}}}{{HTML}}{{{color.lstrip('#').upper()}}}")
     return "\n".join(lines)
@@ -152,10 +155,6 @@ def ranking_table(results: dict) -> str:
     for loc in scored:
         contrib = {c["key"]: c["contribution"] for c in loc["components"]}
         name = tex_escape(loc["name"])
-        if loc["role"] == "headline":
-            name = f"\\textbf{{{name}}}"
-        elif loc["role"] == "benchmark":
-            name = f"\\textit{{{name}}}"
         row = [str(loc["rank"]), name, tex_escape(loc["country"]), f"\\textbf{{{fmt(loc['score'])}}}"]
         row += [fmt(contrib.get(c["key"])) for c in model]
         lines.append(" & ".join(row) + " \\\\")
@@ -164,11 +163,12 @@ def ranking_table(results: dict) -> str:
 
 
 def headtohead_table(results: dict) -> str:
-    headline = results["verdict"].get("headline")
-    if not headline:
-        return "\\emph{The head-to-head comparison is unavailable: both headline cities must be scored.}"
+    """The two highest-ranked locations, ingredient by ingredient."""
+    top = results["verdict"].get("top")
+    if not top:
+        return "\\emph{The comparison of the two highest-ranked locations is unavailable: fewer than two locations were scored.}"
     by_id = _by_id(results)
-    a, b = by_id[headline["winner_id"]], by_id[headline["loser_id"]]
+    a, b = by_id[top["winner_id"]], by_id[top["loser_id"]]
     comp_b = {c["key"]: c for c in b["components"]}
     lines = [
         "\\begin{tabular}{lrr}",
@@ -194,6 +194,31 @@ def headtohead_table(results: dict) -> str:
         "\\bottomrule",
         "\\end{tabular}",
     ]
+    return "\n".join(lines)
+
+
+def regions_table(results: dict) -> str:
+    """Best location of every region; regions in alphabetical order."""
+    best = results["verdict"].get("best_by_group", {})
+    if not best:
+        return "\\emph{No location could be scored.}"
+    by_id = _by_id(results)
+    counts = {}
+    for loc in _scored(results):
+        counts[loc["group"]] = counts.get(loc["group"], 0) + 1
+    lines = [
+        "\\begin{tabular}{@{}lrlrr@{}}",
+        "\\toprule",
+        "Region & Scored & Best location & Score & Rank \\\\",
+        "\\midrule",
+    ]
+    for group in sorted(best):
+        loc = by_id[best[group]]
+        lines.append(
+            f"{tex_escape(group)} & {counts[group]} & {tex_escape(loc['name'])} ({tex_escape(loc['country'])}) & "
+            f"{fmt(loc['score'])} & {loc['rank']} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}"]
     return "\n".join(lines)
 
 
@@ -229,7 +254,7 @@ def contributions_figure(results: dict, top_n: int = 12) -> str:
     scored = _scored(results)
     if not scored:
         return "\\emph{No data to plot.}"
-    shown = scored[:top_n] + [l for l in scored[top_n:] if l["role"] == "headline"]
+    shown = scored[:top_n]
     scale = 0.085  # cm per score point
     bar_h, step = 0.34, 0.52
     lines = ["\\begin{tikzpicture}[font=\\footnotesize]"]
@@ -240,8 +265,6 @@ def contributions_figure(results: dict, top_n: int = 12) -> str:
     for index, loc in enumerate(shown):
         y = -index * step
         label = f"{loc['rank']}. {tex_escape(loc['name'])}"
-        if loc["role"] == "headline":
-            label = f"\\textbf{{{label}}}"
         lines.append(f"\\node[anchor=east] at (-0.1,{y:.3f}) {{{label}}};")
         x = 0.0
         for comp in loc["components"]:
@@ -270,28 +293,19 @@ def findings(results: dict) -> str:
     verdict = results["verdict"]
     if not scored:
         return "No location could be scored; see the coverage notes."
-    parts = []
-    headline = verdict.get("headline")
-    if headline:
-        parts.append(tex_escape(headline["sentence"]))
-        w, l = by_id[headline["winner_id"]], by_id[headline["loser_id"]]
-        parts.append(
-            f"Among all {len(scored)} scored locations, {tex_escape(w['name'])} ranks {_ordinal(w['rank'])} "
-            f"and {tex_escape(l['name'])} ranks {_ordinal(l['rank'])}."
-        )
+    parts = [f"Across all {len(scored)} scored locations: " + tex_escape(verdict["sentence"])]
     leader = by_id[verdict["leader_id"]]
     top = max(leader["components"], key=lambda c: c["contribution"])
     parts.append(
-        f"The overall leader is {tex_escape(leader['name'])} ({tex_escape(leader['country'])}) with "
-        f"{fmt(leader['score'])} points; its largest contribution comes from "
+        f"The largest contribution to {tex_escape(leader['name'])}'s score comes from "
         f"{tex_escape(top['label'].lower())} ({fmt(top['contribution'])} points)."
     )
-    bench = by_id.get(verdict.get("best_by_role", {}).get("benchmark"))
-    if bench:
-        parts.append(
-            f"The best Canadian benchmark is {tex_escape(bench['name'])} with {fmt(bench['score'])} points "
-            f"(rank {bench['rank']})."
-        )
+    best = verdict.get("best_by_group", {})
+    if len(best) > 1:
+        items = [f"{tex_escape(group)}: {tex_escape(by_id[best[group]]['name'])} "
+                 f"({fmt(by_id[best[group]]['score'])}, rank {by_id[best[group]]['rank']})"
+                 for group in sorted(best)]
+        parts.append("The highest-scoring location of each region (alphabetical) is " + "; ".join(items) + ".")
     return "\n".join(parts)
 
 
@@ -315,7 +329,3 @@ def coverage(results: dict) -> str:
         return "All components and sub-metrics were available for every location; no exclusions were needed."
     return "\\begin{itemize}\n" + "\n".join(items) + "\n\\end{itemize}"
 
-
-def _ordinal(n: int) -> str:
-    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
-    return f"{n}{suffix}"

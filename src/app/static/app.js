@@ -1,13 +1,15 @@
 /* Mushroom Livability front end.
  * Plain JavaScript, no dependencies. Reads api/results (relative, so the page
  * also works from a static copy such as GitHub Pages) once and renders
- * everything from that document. State = { group, query, selectedId }.
+ * everything from that document. State = { group, query, selectedId, compareA, compareB }.
+ * No location is singled out: the comparison starts with ranks 1 and 2 and the
+ * reader can pick any two.
  */
 (function () {
   "use strict";
 
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  var state = { data: null, group: "All", query: "", selectedId: null };
+  var state = { data: null, group: "All", query: "", selectedId: null, compareA: null, compareB: null };
   var $ = function (id) { return document.getElementById(id); };
 
   // ---- tiny helpers ----------------------------------------------------
@@ -70,22 +72,35 @@
   }
 
   // ---- header ----------------------------------------------------------
+  // When the provider data was fetched (from the cache records), not when the file was built.
+  function retrievalText(d) {
+    var w = d.data_retrieved;
+    if (!w) return (d.synthetic ? "demo data generated " : "results built ") + d.generated_at.slice(0, 10);
+    var first = w.first.slice(0, 10), last = w.last.slice(0, 10);
+    return "data retrieved " + (first === last ? first : first + " – " + last);
+  }
   function renderHeader() {
     var d = state.data, v = d.verdict, banner = $("banner"), notes = [];
     if (d.synthetic) notes.push("DEMO MODE — synthetic placeholder numbers, not real data. Run the real pipeline for actual results.");
     if (d.partial) notes.push("Partial run — only some locations were processed, so scores are not comparable with a full run.");
     if (notes.length) { banner.textContent = notes.join("  ·  "); banner.hidden = false; }
 
-    var text;
-    if (v.headline) text = v.headline.sentence;
-    else if (v.leader_id) text = "The Paris vs Amsterdam comparison is not available yet (see coverage notes below).";
-    else text = "No location could be scored yet.";
-    $("verdict").textContent = text;
+    $("verdict").textContent = v.sentence || "No location could be scored yet.";
 
-    var leader = byId(v.leader_id), scored = d.locations.filter(function (l) { return l.scored; }).length;
-    var meta = scored + " locations scored · everything within " + num(d.settings.radius_km) + " km of each city centre · data retrieved " + d.generated_at.slice(0, 10);
-    if (leader) meta = "Overall leader: " + leader.name + ", " + leader.country + " (" + num(leader.score, 1) + ") · " + meta;
-    $("meta").textContent = meta;
+    var scored = d.locations.filter(function (l) { return l.scored; }).length, groups = d.groups || [];
+    $("meta").textContent = scored + " locations scored in " + groups.length + " regions, all with the same method · everything within " +
+      num(d.settings.radius_km) + " km of each city centre · " + retrievalText(d);
+
+    var regions = $("regions"), best = v.best_by_group || {};
+    clear(regions);
+    groups.forEach(function (group) {
+      var loc = byId(best[group]);
+      if (!loc) return;
+      regions.appendChild(el("span", { title: "Highest score in " + group }, [
+        document.createTextNode("Best in " + group + ": "), el("b", { text: loc.name }),
+        document.createTextNode(" " + num(loc.score, 1) + " (#" + loc.rank + ")")
+      ]));
+    });
 
     var download = $("download"), url = d.settings.download_url;
     if (url && /^https:\/\//.test(url)) {
@@ -128,7 +143,7 @@
     return wrap;
   }
 
-  // ---- head to head ----------------------------------------------------
+  // ---- compare two locations --------------------------------------------
   function fact(value, label) { return el("div", { class: "fact" }, [el("b", { text: value }), el("span", { text: label })]); }
   function duelCard(loc, isWinner, isTie) {
     var m = loc.metrics;
@@ -137,7 +152,7 @@
         el("div", {}, [
           el("h3", { class: "duel-name", text: loc.name }),
           el("p", { class: "duel-sub", text: loc.country + " · rank " + loc.rank + " overall" }),
-          isWinner && !isTie ? el("span", { class: "pill", text: "Better for mushroom lovers" }) : null
+          isWinner && !isTie ? el("span", { class: "pill", text: "Higher score" }) : null
         ]),
         el("div", { class: "big-score" }, [document.createTextNode(num(loc.score, 1)), el("small", { text: "/ 100" })])
       ]),
@@ -172,20 +187,32 @@
     });
     return el("div", { class: "card butterfly" }, rows);
   }
+  function renderPickers() {
+    var scored = state.data.locations.filter(function (l) { return l.scored; });
+    [["compare-a", "compareA"], ["compare-b", "compareB"]].forEach(function (pair) {
+      var node = $(pair[0]);
+      clear(node);
+      scored.forEach(function (l) { node.appendChild(el("option", { value: l.id, text: l.rank + ". " + l.name + ", " + l.country })); });
+      node.value = state[pair[1]];
+      node.onchange = function () { state[pair[1]] = node.value; renderDuel(); };
+    });
+  }
   function renderDuel() {
-    var d = state.data, body = $("duel-body"), head = d.locations.filter(function (l) { return l.role === "headline"; });
+    var body = $("duel-body"), a = byId(state.compareA), b = byId(state.compareB);
     clear(body);
-    var first = byId("paris") && byId("amsterdam") ? [byId("paris"), byId("amsterdam")] : head;
-    $("duel-title").textContent = first.map(function (l) { return l.name; }).join(" vs ") || "Head to head";
-    var h = d.verdict.headline;
-    if (!h) {
-      $("duel-lede").textContent = "Both headline cities must be scored for the comparison. See the coverage notes under “How the score works”.";
+    if (!a || !b) {
+      $("duel-lede").textContent = "At least two locations must be scored for a comparison. See the coverage notes under “How the score works”.";
       return;
     }
-    $("duel-lede").textContent = "Same radius, same sources, same formula. The bars show how many points each ingredient adds to the total.";
-    var cards = el("div", { class: "duel" }, first.map(function (loc) { return duelCard(loc, loc.id === h.winner_id, h.is_tie); }));
+    $("duel-lede").textContent = "Pick any two locations; the page opens on the two highest-ranked. Same radius, same sources, same formula. The bars show how many points each ingredient adds to the total.";
+    if (a.id === b.id) {
+      body.appendChild(el("p", { class: "muted", text: "Choose two different locations to compare." }));
+      return;
+    }
+    var pair = a.score >= b.score ? [a, b] : [b, a], isTie = pair[0].score - pair[1].score < state.data.verdict.tie_margin;
+    var cards = el("div", { class: "duel" }, [a, b].map(function (loc) { return duelCard(loc, loc.id === pair[0].id, isTie); }));
     body.appendChild(cards);
-    body.appendChild(butterfly(first[0], first[1]));
+    body.appendChild(butterfly(a, b));
   }
 
   // ---- ranking ---------------------------------------------------------
@@ -238,8 +265,6 @@
     $("rank-empty").hidden = rows.length > 0;
     rows.forEach(function (loc) {
       var name = el("td", {}, [el("span", { class: "loc-name", text: loc.name })]);
-      if (loc.role === "headline") name.appendChild(el("span", { class: "tag", text: "Headline" }));
-      if (loc.role === "benchmark") name.appendChild(el("span", { class: "tag bench", text: "Benchmark" }));
       var row = el("tr", { tabindex: "0", class: loc.id === state.selectedId ? "selected" : "", "aria-label": loc.name + ", score " + num(loc.score, 1) }, [
         el("td", { class: "num", text: String(loc.rank) }), name, el("td", { text: loc.country }),
         el("td", { class: "num score-cell", text: num(loc.score, 1) }), el("td", {}, [stack(loc)])
@@ -324,7 +349,7 @@
     top = Math.max(top, 0.01);
     var grid = el("div", { class: "cal-grid" }, [el("span", {})].concat(MONTHS.map(function (m) { return el("span", { class: "cal-month", text: m }); })));
     rows.forEach(function (loc) {
-      grid.appendChild(el("span", { class: "cal-name" + (loc.role === "headline" ? " headline" : ""), text: loc.name }));
+      grid.appendChild(el("span", { class: "cal-name", text: loc.name }));
       loc.monthly_share.forEach(function (share, i) {
         var cell = el("span", { class: "cal-cell", style: "background:" + ramp(share / top) });
         attachTip(cell, function () {
@@ -384,8 +409,10 @@
   // ---- boot ------------------------------------------------------------
   function render() {
     var v = state.data.verdict;
-    state.selectedId = (v.headline && v.headline.winner_id) || v.leader_id;
-    renderHeader(); renderDuel(); renderChips(); renderLegend(); renderSelect();
+    state.selectedId = v.leader_id;
+    state.compareA = v.leader_id;
+    state.compareB = v.runner_up_id;
+    renderHeader(); renderPickers(); renderDuel(); renderChips(); renderLegend(); renderSelect();
     renderRanking(); renderDetail(); renderCalendar(); renderMethod();
     $("search").addEventListener("input", function (e) { state.query = e.target.value; renderRanking(); renderCalendar(); });
     $("content").hidden = false;

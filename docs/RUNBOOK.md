@@ -47,17 +47,20 @@ This proves the app works on this machine before real data is involved. Stop the
 python main.py check
 ```
 
-Sends one real request set per source for Paris, bypassing the cache. Expected output: six
-`OK` lines with plausible values:
+Sends one real request set per source for the **first row of `config/locations.csv`**
+(currently Vancouver; rows are ordered by region, so no city is a built-in reference),
+bypassing the cache. Use `--location <id>` to test another location. Expected output: six
+`OK` lines with plausible values. For Vancouver, compare with what the cached responses of
+2026-11-19 recorded:
 
-| Source | Plausible for Paris (25 km) |
+| Source | Plausible for the default location (Vancouver, 25 km) |
 |---|---|
-| `inaturalist` | fungi observations in the thousands or more; all-taxa count much larger; species in the hundreds or more; 12 monthly counts peaking in autumn |
-| `inaturalist_points` | up to 200 `[lat, lon]` pairs near 48.86, 2.35 |
-| `gbif` | a positive record count (11,342 was returned on 2026-11-19) |
-| `open_meteo` | 12 months; July mean around 20 °C, January around 5 °C; monthly rain roughly 40–70 mm |
-| `worldpop` | population on the order of 9–10 million |
-| `osm_forest` | a share between 0 and 1 (Paris region: expect roughly 0.1–0.3) |
+| `inaturalist` | fungi observations in the tens of thousands (30,754 cached); all-taxa count much larger (663,722); species in the hundreds or more (1,534); 12 monthly counts peaking in autumn (October) |
+| `inaturalist_points` | up to 200 `[lat, lon]` pairs near 49.28, -123.12 |
+| `gbif` | a positive record count (31,660 cached) |
+| `open_meteo` | 12 months; August mean around 19 °C, January around 4 °C; monthly rain from roughly 40 mm in summer to roughly 300 mm in late autumn |
+| `worldpop` | a positive population; the statistics service was unavailable on 2026-11-19 (see `KNOWN_RISKS.md` A11–A13) |
+| `osm_forest` | a share between 0 and 1 (0.0541 cached; a lower bound, see A16) |
 
 For every `FAIL`: apply the decision rules in `AGENTS.md` section 6 and the matching entry
 in `docs/KNOWN_RISKS.md`. Re-run `check` until each source is OK or documented as an
@@ -66,7 +69,7 @@ unavailable optional source.
 ## Step 5 — Two-city rehearsal
 
 ```bash
-python main.py pipeline --only paris,amsterdam
+python main.py pipeline --only vancouver,victoria
 ```
 
 Expected: 12 `ok` lines, results written, a verdict printed. This validates caching and
@@ -103,8 +106,10 @@ for l in scored:
     assert l["raw"]["all_observations"] >= l["raw"]["fungi_observations"], l["id"]
     assert sum(l["raw"]["monthly_observations"]) > 0, l["id"]
 assert abs(sum(c["weight"] for c in r["model"]) - 1) < 1e-9
-ids = {l["id"] for l in scored}; assert {"paris", "amsterdam"} <= ids
-print(r["verdict"]["headline"]["sentence"])
+assert len(scored) == len(locs), "every location must be scored"
+assert r["verdict"]["leader_id"] == scored[0]["id"] and r["verdict"]["runner_up_id"] == scored[1]["id"]
+assert set(r["verdict"]["best_by_group"]) == set(r["groups"]) and r["groups"] == sorted(r["groups"])
+print(r["verdict"]["sentence"])
 print("errors:", {l["id"]: l["errors"] for l in locs if l["errors"]})
 EOF
 ```
@@ -131,21 +136,24 @@ full-page screenshot at the start and after the checklist.
 - [ ] `GET /api/results` returns 200; `GET /healthz` returns `results_available: true`.
 
 **Answer**
-- [ ] The headline shows the verdict sentence naming Paris and Amsterdam with both scores.
-- [ ] The line under it names the overall leader, the number of scored locations, the 25 km radius and today's retrieval date.
+- [ ] The headline shows the verdict sentence naming the locations ranked 1 and 2 with both scores.
+- [ ] The line under it gives the number of scored locations and regions, the 25 km radius and the retrieval date.
+- [ ] One "Best in <region>" pill per region, regions in alphabetical order, each naming the best-ranked location of that region with score and rank.
+- [ ] No location, city or country is tagged, highlighted or set apart anywhere on the page.
 
-**Head to head**
-- [ ] Section title reads "Paris vs Amsterdam"; two cards, Paris left, Amsterdam right.
-- [ ] The higher-scoring card is outlined and labelled "Better for mushroom lovers" (unless a tie is declared).
+**Compare two locations**
+- [ ] Section title reads "Compare two locations"; the "First" and "Second" dropdowns open on ranks 1 and 2.
+- [ ] Choosing two other locations re-renders both cards and the bars; choosing the same location twice shows "Choose two different locations to compare."
+- [ ] The higher-scoring card is outlined and labelled "Higher score" (unless the gap is below the tie margin).
 - [ ] Each card shows score, overall rank, observation count, species count, reliable months.
 - [ ] Each card shows a density heatmap with visible cells; hovering a cell shows a tooltip with a record count.
 - [ ] The comparison bars below list every active ingredient with points for both cities; values match the cards' totals when summed.
 
 **Ranking**
 - [ ] Table lists all scored locations in descending score order, ranks 1…N without gaps.
-- [ ] Paris and Amsterdam carry a "Headline" tag; Canadian cities a "Benchmark" tag.
+- [ ] No row carries a tag; every location is presented the same way.
 - [ ] Each row has a stacked bar; the legend above names every colour with its weight; hovering a segment shows points.
-- [ ] Region chips: clicking "Canada" leaves only Canadian cities (8); "All" restores the list.
+- [ ] Region chips are in alphabetical order after "All"; clicking a region leaves only its locations (e.g. "Southern Europe" → 8); "All" restores the list.
 - [ ] Search: typing `van` leaves Vancouver; typing nonsense shows "No location matches this filter."
 
 **Breakdown**
@@ -170,7 +178,7 @@ full-page screenshot at the start and after the checklist.
 - [ ] Keyboard: Tab reaches chips, search, table rows and the dropdown; Enter on a row selects it.
 
 **Cross-check against the data**
-- [ ] Pick three locations (Paris, the leader, one Canadian city): score and rank on the page equal `results.json`.
+- [ ] Pick three locations from three different regions (one of them the leader): score and rank on the page equal `results.json`.
 
 Any failed item → fix → re-run the *entire* checklist.
 

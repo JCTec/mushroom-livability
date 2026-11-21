@@ -12,19 +12,18 @@ from typing import Any, Optional
 
 @dataclass(frozen=True)
 class Location:
-    """A place someone could live. `role` is headline, europe or benchmark."""
+    """A place someone could live.
+
+    Every location is a peer: none is singled out in advance, so the answer
+    to "where should a mushroom lover live?" comes from the ranking alone.
+    """
 
     id: str
     name: str
     country: str
     group: str
-    role: str
     lat: float
     lon: float
-
-    @property
-    def is_headline(self) -> bool:
-        return self.role == "headline"
 
     def to_dict(self) -> dict:
         return asdict(self)

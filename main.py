@@ -29,7 +29,7 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
 
 def _add_pipeline(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--only", default="",
-                        help="comma-separated location ids for a quick partial run, e.g. paris,amsterdam")
+                        help="comma-separated location ids for a quick partial run, e.g. oslo,lisbon")
     parser.add_argument("--clear-cache", action="store_true",
                         help="delete cached API responses first (forces fresh downloads)")
 
@@ -55,7 +55,8 @@ def build_parser(settings: Settings) -> argparse.ArgumentParser:
     _add_common(serve), _add_serve(serve, settings)
 
     check = sub.add_parser("check", help="live smoke test of every data source")
-    check.add_argument("--location", default="paris", help="location id to test with")
+    check.add_argument("--location", default=None,
+                       help="location id to test with (default: first row of config/locations.csv)")
 
     paper = sub.add_parser("paper", help="regenerate LaTeX fragments from saved results")
     _add_common(paper)

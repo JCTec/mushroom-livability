@@ -31,7 +31,7 @@ from src.settings import Paths, Settings
 from src.visualization import palette
 from src.visualization.heatmap import density_heatmap, seasonal_row
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2  # 2: no location roles; verdict = rank 1 vs rank 2 + best per group; data_retrieved
 Progress = Callable[[str], None]
 
 
@@ -45,11 +45,12 @@ def build_http(settings: Settings, paths: Paths) -> CachedJsonHttp:
     return CachedJsonHttp(client, paths.cache_dir)
 
 
-def build_sources(settings: Settings, paths: Paths, synthetic: bool) -> list:
+def build_sources(settings: Settings, paths: Paths, synthetic: bool,
+                  http: Optional[CachedJsonHttp] = None) -> list:
     """The ordered list of sources. Register new datasets here."""
     if synthetic:
         return [SyntheticSource(settings)]
-    http = build_http(settings, paths)
+    http = http or build_http(settings, paths)
     return [
         INaturalistStatsSource(http, settings),
         INaturalistSampleSource(http, settings),
@@ -72,8 +73,12 @@ def select_locations(locations: list, only: Optional[Iterable[str]]) -> list:
 
 
 def assemble_results(locations: list, raw_by_id: dict, settings: Settings, sources: list, synthetic: bool,
-                     engine: Optional[ScoringEngine] = None) -> dict:
-    """Pure function: raw data -> the full results document."""
+                     engine: Optional[ScoringEngine] = None, data_retrieved: Optional[dict] = None) -> dict:
+    """Pure function: raw data -> the full results document.
+
+    `data_retrieved` is {"first", "last"} retrieval timestamps of the provider
+    responses used (None for synthetic data); `generated_at` is only the build time.
+    """
     engine = engine or ScoringEngine()
     metrics_by_id = {loc.id: build_metrics(raw_by_id[loc.id], settings) for loc in locations}
     scoring = engine.score(metrics_by_id)
@@ -91,6 +96,7 @@ def assemble_results(locations: list, raw_by_id: dict, settings: Settings, sourc
         "schema_version": SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "synthetic": synthetic,
+        "data_retrieved": data_retrieved,
         "settings": {
             "radius_km": settings.radius_km,
             "area_km2": round(settings.area_km2, 1),
@@ -101,7 +107,7 @@ def assemble_results(locations: list, raw_by_id: dict, settings: Settings, sourc
             "sample_size_cap": settings.sample_pages * settings.sample_page_size,
             "download_url": settings.download_url,
         },
-        "groups": list(dict.fromkeys(loc.group for loc in locations)),
+        "groups": sorted({loc.group for loc in locations}),  # alphabetical: no region listed first by design
         "palette": palette.as_dict(),
         "model": scoring.model,
         "exclusions": scoring.exclusions,
@@ -146,12 +152,14 @@ def run_pipeline(settings: Settings, paths: Paths, synthetic: bool = False, only
                  progress: Progress = print) -> dict:
     """Fetch (or reuse cached) data, score, save results and paper fragments."""
     locations = select_locations(load_locations(paths.locations_csv), only)
-    sources = build_sources(settings, paths, synthetic)
+    http = None if synthetic else build_http(settings, paths)
+    sources = build_sources(settings, paths, synthetic, http)
     progress(f"Collecting data for {len(locations)} locations from {len(sources)} source(s)"
              f"{' [SYNTHETIC DEMO DATA]' if synthetic else ''} ...")
     raw_by_id = DataCollector(sources, progress).collect(locations)
 
-    results = assemble_results(locations, raw_by_id, settings, sources, synthetic)
+    results = assemble_results(locations, raw_by_id, settings, sources, synthetic,
+                               data_retrieved=http.retrieval_window() if http else None)
     results["partial"] = bool(only)
     out = paths.results_file(synthetic)
     save_results(results, out)
@@ -174,6 +182,8 @@ def summarise(results: dict, progress: Progress) -> None:
         progress(f"  excluded {exclusion['level']} '{exclusion['label']}': {exclusion['reason']}")
     for unscored in results["unscored"]:
         progress(f"  unscored {unscored['name']}: missing {', '.join(unscored['missing'])}")
-    headline = results["verdict"].get("headline")
-    if headline:
-        progress("Verdict: " + headline["sentence"])
+    verdict = results["verdict"]
+    progress("Verdict: " + verdict["sentence"])
+    names = {loc["id"]: loc["name"] for loc in results["locations"]}
+    for group, loc_id in sorted(verdict["best_by_group"].items()):
+        progress(f"  best in {group}: {names[loc_id]}")

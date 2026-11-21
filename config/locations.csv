@@ -1,41 +1,41 @@
-id,name,country,group,role,lat,lon
-paris,Paris,France,France & Benelux,headline,48.8566,2.3522
-amsterdam,Amsterdam,Netherlands,France & Benelux,headline,52.3676,4.9041
-lyon,Lyon,France,France & Benelux,europe,45.7640,4.8357
-bordeaux,Bordeaux,France,France & Benelux,europe,44.8378,-0.5792
-strasbourg,Strasbourg,France,France & Benelux,europe,48.5734,7.7521
-utrecht,Utrecht,Netherlands,France & Benelux,europe,52.0907,5.1214
-brussels,Brussels,Belgium,France & Benelux,europe,50.8503,4.3517
-berlin,Berlin,Germany,Germany & Central Europe,europe,52.5200,13.4050
-munich,Munich,Germany,Germany & Central Europe,europe,48.1351,11.5820
-freiburg,Freiburg im Breisgau,Germany,Germany & Central Europe,europe,47.9990,7.8421
-vienna,Vienna,Austria,Germany & Central Europe,europe,48.2082,16.3738
-zurich,Zurich,Switzerland,Germany & Central Europe,europe,47.3769,8.5417
-prague,Prague,Czechia,Germany & Central Europe,europe,50.0755,14.4378
-warsaw,Warsaw,Poland,Germany & Central Europe,europe,52.2297,21.0122
-krakow,Krakow,Poland,Germany & Central Europe,europe,50.0647,19.9450
-ljubljana,Ljubljana,Slovenia,Germany & Central Europe,europe,46.0569,14.5058
-stockholm,Stockholm,Sweden,Nordics,europe,59.3293,18.0686
-gothenburg,Gothenburg,Sweden,Nordics,europe,57.7089,11.9746
-oslo,Oslo,Norway,Nordics,europe,59.9139,10.7522
-helsinki,Helsinki,Finland,Nordics,europe,60.1699,24.9384
-copenhagen,Copenhagen,Denmark,Nordics,europe,55.6761,12.5683
-london,London,United Kingdom,UK & Ireland,europe,51.5074,-0.1278
-edinburgh,Edinburgh,United Kingdom,UK & Ireland,europe,55.9533,-3.1883
-dublin,Dublin,Ireland,UK & Ireland,europe,53.3498,-6.2603
-milan,Milan,Italy,Southern Europe,europe,45.4642,9.1900
-turin,Turin,Italy,Southern Europe,europe,45.0703,7.6869
-trento,Trento,Italy,Southern Europe,europe,46.0748,11.1217
-rome,Rome,Italy,Southern Europe,europe,41.9028,12.4964
-madrid,Madrid,Spain,Southern Europe,europe,40.4168,-3.7038
-barcelona,Barcelona,Spain,Southern Europe,europe,41.3874,2.1686
-bilbao,Bilbao,Spain,Southern Europe,europe,43.2630,-2.9350
-lisbon,Lisbon,Portugal,Southern Europe,europe,38.7223,-9.1393
-vancouver,Vancouver,Canada,Canada,benchmark,49.2827,-123.1207
-victoria,Victoria,Canada,Canada,benchmark,48.4284,-123.3656
-calgary,Calgary,Canada,Canada,benchmark,51.0447,-114.0719
-toronto,Toronto,Canada,Canada,benchmark,43.6532,-79.3832
-ottawa,Ottawa,Canada,Canada,benchmark,45.4215,-75.6972
-montreal,Montreal,Canada,Canada,benchmark,45.5019,-73.5674
-quebec-city,Quebec City,Canada,Canada,benchmark,46.8139,-71.2080
-halifax,Halifax,Canada,Canada,benchmark,44.6488,-63.5752
+id,name,country,group,lat,lon
+vancouver,Vancouver,Canada,Canada,49.2827,-123.1207
+victoria,Victoria,Canada,Canada,48.4284,-123.3656
+calgary,Calgary,Canada,Canada,51.0447,-114.0719
+toronto,Toronto,Canada,Canada,43.6532,-79.3832
+ottawa,Ottawa,Canada,Canada,45.4215,-75.6972
+montreal,Montreal,Canada,Canada,45.5019,-73.5674
+quebec-city,Quebec City,Canada,Canada,46.8139,-71.2080
+halifax,Halifax,Canada,Canada,44.6488,-63.5752
+paris,Paris,France,France & Benelux,48.8566,2.3522
+amsterdam,Amsterdam,Netherlands,France & Benelux,52.3676,4.9041
+lyon,Lyon,France,France & Benelux,45.7640,4.8357
+bordeaux,Bordeaux,France,France & Benelux,44.8378,-0.5792
+strasbourg,Strasbourg,France,France & Benelux,48.5734,7.7521
+utrecht,Utrecht,Netherlands,France & Benelux,52.0907,5.1214
+brussels,Brussels,Belgium,France & Benelux,50.8503,4.3517
+berlin,Berlin,Germany,Germany & Central Europe,52.5200,13.4050
+munich,Munich,Germany,Germany & Central Europe,48.1351,11.5820
+freiburg,Freiburg im Breisgau,Germany,Germany & Central Europe,47.9990,7.8421
+vienna,Vienna,Austria,Germany & Central Europe,48.2082,16.3738
+zurich,Zurich,Switzerland,Germany & Central Europe,47.3769,8.5417
+prague,Prague,Czechia,Germany & Central Europe,50.0755,14.4378
+warsaw,Warsaw,Poland,Germany & Central Europe,52.2297,21.0122
+krakow,Krakow,Poland,Germany & Central Europe,50.0647,19.9450
+ljubljana,Ljubljana,Slovenia,Germany & Central Europe,46.0569,14.5058
+stockholm,Stockholm,Sweden,Nordics,59.3293,18.0686
+gothenburg,Gothenburg,Sweden,Nordics,57.7089,11.9746
+oslo,Oslo,Norway,Nordics,59.9139,10.7522
+helsinki,Helsinki,Finland,Nordics,60.1699,24.9384
+copenhagen,Copenhagen,Denmark,Nordics,55.6761,12.5683
+milan,Milan,Italy,Southern Europe,45.4642,9.1900
+turin,Turin,Italy,Southern Europe,45.0703,7.6869
+trento,Trento,Italy,Southern Europe,46.0748,11.1217
+rome,Rome,Italy,Southern Europe,41.9028,12.4964
+madrid,Madrid,Spain,Southern Europe,40.4168,-3.7038
+barcelona,Barcelona,Spain,Southern Europe,41.3874,2.1686
+bilbao,Bilbao,Spain,Southern Europe,43.2630,-2.9350
+lisbon,Lisbon,Portugal,Southern Europe,38.7223,-9.1393
+london,London,United Kingdom,UK & Ireland,51.5074,-0.1278
+edinburgh,Edinburgh,United Kingdom,UK & Ireland,55.9533,-3.1883
+dublin,Dublin,Ireland,UK & Ireland,53.3498,-6.2603

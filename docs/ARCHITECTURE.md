@@ -73,21 +73,25 @@ anything that affects a score.
 | Paper numbers are generated | `paper/generated/` is written by the pipeline; the prose contains macros, not numbers. |
 | Demo mode is synthetic and segregated | Lets the UI and paper build be tested offline; separate file, banner and LaTeX warning box prevent it being mistaken for results. |
 
-## The results document (schema v1)
+## The results document (schema v2)
 
 ```
 schema_version, generated_at, synthetic, partial
+data_retrieved  { first, last } ISO retrieval times of the provider responses used (from the
+                cache's fetched_at) | null for synthetic data. Shown as "data retrieved" in the
+                app and paper; generated_at is only when the file was built.
 settings      { radius_km, area_km2, climate_period, worldpop_year, reliable_month_*, sample_size_cap }
-groups        [ region names in display order ]
+groups        [ region names, alphabetical ]
 palette       { components: {key: hex}, sequential_low, sequential_high }
 model         [ { key, label, question, nominal_weight, weight,
                   submetrics: [ { key, label, unit, nominal_weight, weight, scaling, why } ] } ]
 exclusions    [ { level: submetric|component, key, label, reason } ]
 unscored      [ { id, name, missing: [labels] } ]
 sources       [ { key, title, provider, url, license, used_for, retrieval } ]
-verdict       { leader_id, best_by_role: {role: id},
-                headline: { winner_id, loser_id, margin, is_tie, gaps[], main_driver, sentence } | null }
-locations     [ { id, name, country, group, role, lat, lon,
+verdict       { leader_id, runner_up_id, best_by_group: {group: id}, tie_margin, sentence,
+                top: { winner_id, loser_id, margin, is_tie, gaps[], main_driver, sentence } | null }
+                (top = rank 1 vs rank 2; no location is singled out in advance)
+locations     [ { id, name, country, group, lat, lon,
                   scored, score, rank,
                   components: [ { key, label, weight, value, contribution,
                                   submetrics: [ { key, label, unit, raw, normalized, weight } ] } ],

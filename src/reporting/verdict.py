@@ -1,4 +1,9 @@
-"""Turn scores into the plain-language answer to the project's question."""
+"""Turn scores into the plain-language answer to the project's question.
+
+No location is singled out in advance: the answer is whoever ranks first,
+explained against whoever ranks second, plus the best location of every
+region so that no region is privileged in the summary.
+"""
 
 from __future__ import annotations
 
@@ -10,23 +15,30 @@ TIE_MARGIN = 1.0  # points; a smaller gap is reported as "too close to call"
 
 
 def build_verdict(locations: list) -> dict:
-    """`locations` are result entries (dicts with role, scored, score...)."""
-    scored = [loc for loc in locations if loc.get("scored")]
-    verdict = {"leader_id": None, "headline": None, "best_by_role": {}}
+    """`locations` are result entries (dicts with id, name, country, group, scored, score, rank...)."""
+    scored = sorted((loc for loc in locations if loc.get("scored")), key=lambda loc: loc["rank"])
+    verdict = {"leader_id": None, "runner_up_id": None, "best_by_group": {}, "top": None,
+               "tie_margin": TIE_MARGIN, "sentence": "No location could be scored yet."}
     if not scored:
         return verdict
 
-    leader = min(scored, key=lambda loc: loc["rank"])
+    leader = scored[0]
     verdict["leader_id"] = leader["id"]
-    for role in ("headline", "europe", "benchmark"):
-        in_role = [loc for loc in scored if loc["role"] == role]
-        if in_role:
-            verdict["best_by_role"][role] = min(in_role, key=lambda loc: loc["rank"])["id"]
+    for loc in scored:  # ranked order, so the first seen per group is that group's best
+        verdict["best_by_group"].setdefault(loc["group"], loc["id"])
 
-    headline = [loc for loc in scored if loc["role"] == "headline"]
-    if len(headline) == 2:
-        verdict["headline"] = _head_to_head(*sorted(headline, key=lambda loc: loc["rank"]))
+    if len(scored) >= 2:
+        runner_up = scored[1]
+        verdict["runner_up_id"] = runner_up["id"]
+        verdict["top"] = _head_to_head(leader, runner_up)
+        verdict["sentence"] = verdict["top"]["sentence"]
+    else:
+        verdict["sentence"] = f"{_place(leader)} is the only location scored ({leader['score']:.1f} out of 100)."
     return verdict
+
+
+def _place(loc: dict) -> str:
+    return f"{loc['name']} ({loc['country']})" if loc.get("country") else loc["name"]
 
 
 def _head_to_head(winner: dict, loser: dict) -> dict:
@@ -46,16 +58,16 @@ def _head_to_head(winner: dict, loser: dict) -> dict:
 def _sentence(winner: dict, loser: dict, margin: float, gaps: list) -> str:
     if margin < TIE_MARGIN:
         return (
-            f"{winner['name']} and {loser['name']} are too close to call "
+            f"{_place(winner)} and {_place(loser)} are too close to call at the top of the ranking "
             f"({winner['score']:.1f} vs {loser['score']:.1f} out of 100)."
         )
     text = (
-        f"{winner['name']} is the better base for a mushroom lover: "
-        f"{winner['score']:.1f} vs {loser['score']:.1f} out of 100 for {loser['name']}."
+        f"{_place(winner)} ranks first for a mushroom lover with {winner['score']:.1f} out of 100, "
+        f"ahead of {_place(loser)} with {loser['score']:.1f}."
     )
     driver: Optional[dict] = next((g for g in gaps if g["gap"] >= TIE_MARGIN), None)
     if driver:
-        text += f" The biggest advantage is {driver['label'].lower()} (+{driver['gap']:.1f} points)."
+        text += f" Its biggest advantage is {driver['label'].lower()} (+{driver['gap']:.1f} points)."
     counter = next((g for g in gaps if g["gap"] <= -TIE_MARGIN), None)
     if counter:
         text += f" {loser['name']} does better on {counter['label'].lower()} (+{-counter['gap']:.1f} points)."

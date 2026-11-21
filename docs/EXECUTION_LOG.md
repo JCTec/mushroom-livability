@@ -140,3 +140,41 @@ The repository was found **public** (visibility changed outside this session). P
 
 "Amsterdam is the better base for a mushroom lover: 60.7 vs 57.4 out of 100 for Paris. The biggest advantage is observation density (+7.6 points). Paris does better on seasonal reliability (+6.7 points)."
 Overall leader: Berlin, Germany (78.5). Best Canadian city: Vancouver (72.3, rank 3). Amsterdam ranks 11th, Paris 13th of 40.
+
+### Post-run — location-neutral presentation (user request)            2026-11-21
+Request: remove the special importance given to Paris and Amsterdam; keep the project general and country-agnostic, promoting no city or country.
+Changes (presentation only; no change to weights, thresholds, scalers, radius, the location list or the coverage rules):
+- `config/locations.csv`, `src/domain.py`, `src/data/locations.py`: `role` column/field (`headline`/`europe`/`benchmark`) removed; every location is a peer.
+- `src/reporting/verdict.py`: verdict = rank 1 vs rank 2 (chosen by score alone) + `best_by_group` for every region + `tie_margin`; `headline`/`best_by_role` removed.
+- `src/pipeline.py`: `groups` sorted alphabetically; `SCHEMA_VERSION` 1 → 2; console summary prints the verdict and best per region.
+- `src/app/`: "Paris vs Amsterdam" section → "Compare two locations" with two dropdowns (opens on ranks 1 and 2); "Best in <region>" pills in the header; "Headline"/"Benchmark" tags and bold calendar names removed.
+- `src/reporting/latex.py` + `paper/paper.tex`: title, abstract, introduction and captions neutral; head-to-head table = ranks 1 and 2; new `regions_table.tex`; no bold/italic location names; macros `Headline*`/`BestBenchmark*` → `RunnerUp*`, `TopMargin`, `NumGroups`.
+- `paper/interpretation.tex`: rules and text rewritten (top two, leaders, regions, caveats); every claim checked against `results.json`.
+- Docs: README, METHODOLOGY, ARCHITECTURE, RUNBOOK (sanity script + web checklist), KNOWN_RISKS P3, AGENTS.md (unscored-location rule, report format), HANDOFF_PROMPT, `main.py` help text.
+- Tests: 51 OK (was 48). New: verdict is rank 1 vs rank 2; best-by-group covers every region; verdict invariant to input order (no privileged location); single scored location; unscored location left out of verdict; fragments contain no Headline/Benchmark macros or styled names; regions table; groups alphabetical; no `role` field.
+Run: `python main.py pipeline` from cache (40 s; only the 40 known WorldPop 404s went to the network). Compared with the previous `results.json`: every location's score, rank, raw values, metrics, components and errors identical; exclusions, model and sources identical.
+Paper: `pdflatex` ×3, exit 0, 8 pages, 0 overfull boxes, no undefined references.
+Web: Chrome extension not connected, so headless Chrome driven over the DevTools protocol (Node built-in WebSocket, no new dependency): `data-ready="true"`, no console errors, no banner; verdict and 6 region pills correct; dropdowns open on Berlin/Helsinki; Lisbon vs Calgary re-renders cards and bars (pill on Lisbon); same location twice → "Choose two different locations to compare."; "Southern Europe" chip → 8 rows and 8 calendar rows, "All" → 40; no tags; no horizontal scroll at 390 px. Hover tooltips and keyboard navigation not re-tested.
+Open: `generated_at` (shown as "data retrieved") is the time the results file was built, so it now reads 2026-11-21 although every response was fetched on 2026-11-19 (`fetched_at` in `data/cache/`). Pre-existing behaviour, not changed here.
+
+## Verdict (location-neutral, 2026-11-21)
+
+"Berlin (Germany) ranks first for a mushroom lover with 78.5 out of 100, ahead of Helsinki (Finland) with 74.2. Its biggest advantage is seasonal reliability (+3.3 points). Helsinki does better on observation density (+2.1 points)."
+Best per region (alphabetical): Canada — Vancouver (72.3, #3); France & Benelux — Brussels (70.6, #4); Germany & Central Europe — Berlin (78.5, #1); Nordics — Helsinki (74.2, #2); Southern Europe — Trento (54.7, #16); UK & Ireland — London (68.1, #5).
+The 2026-11-19 verdict above is kept as history; the scores behind it are unchanged.
+
+### Post-run — real retrieval date; no default city (user request)            2026-11-21
+Request: fix the "data retrieved" date; stop using Paris as the default/reference location ("better to use the first city in the list or Vancouver").
+Changes:
+- `src/data/http.py`: `CachedJsonHttp` records the `fetched_at` of every response it serves (cache hit or fresh) and exposes `retrieval_window()`.
+- `src/pipeline.py`: results carry `data_retrieved: {first, last}` (null for synthetic data). `generated_at` remains the build time only.
+- `src/app/static/app.js`: the header shows "data retrieved <date>" (or "<first> – <last>") from `data_retrieved`; files without it fall back to "results built <date>" / "demo data generated <date>".
+- `src/reporting/latex.py` + `paper/paper.tex`: new `\MLSRetrievedDate`, used for the title-page date and the "Retrieved" dates in the bibliography.
+- `config/locations.csv`: rows reordered by region, alphabetically (a stable sort that keeps the existing order within each region), so Canada comes first and Vancouver is row 1. This changes no ids, coordinates or rows, only their order.
+- `src/diagnostics.py` + `main.py`: `check` defaults to the first CSV row (`pick_location`) instead of a hard-coded `paris`.
+- Tests: adapter fixtures switched from Paris to Vancouver (Paris/Amsterdam fixtures removed). New tests: cache retrieval window (old cache entry + fresh response), `retrieval_dates` (single day, span, fallback), `data_retrieved` passthrough, `pick_location` default/explicit/unknown, CSV rows ordered by region. 54 tests OK.
+- Docs: README (check row, add-a-city note), RUNBOOK Step 4 (default location Vancouver; reference values taken from the 2026-11-19 cache) and Step 5 rehearsal (`--only vancouver,victoria`), ARCHITECTURE (schema v2, `data_retrieved`), METHODOLOGY (row order).
+Run: `python main.py pipeline` from cache (only the 40 known WorldPop 404s went to the network). Compared with the original 2026-11-19 `results.json`: every location's score, rank, raw values, metrics, components and errors identical, ranking order identical; model, sources and unscored identical. The only text change is the example in the WorldPop exclusion reason ("e.g. vancouver" instead of "e.g. paris"; it names the first row). `data_retrieved` = 2026-11-19T16:46:17Z – 2026-11-19T17:28:32Z.
+Paper: `pdflatex` ×3, exit 0, 8 pages, 0 overfull; title page and references read "2026-11-19".
+Web (headless Chrome over CDP): header reads "data retrieved 2026-11-19"; all interaction checks from the previous entry pass again; no console errors.
+This resolves the "Open" date item of the previous entry.

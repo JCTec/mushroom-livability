@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from src.domain import Location
 
-PARIS = Location("paris", "Paris", "France", "France & Benelux", "headline", 48.8566, 2.3522)
-AMSTERDAM = Location("amsterdam", "Amsterdam", "Netherlands", "France & Benelux", "headline", 52.3676, 4.9041)
-VANCOUVER = Location("vancouver", "Vancouver", "Canada", "Canada", "benchmark", 49.2827, -123.1207)
+VANCOUVER = Location("vancouver", "Vancouver", "Canada", "Canada", 49.2827, -123.1207)
 
 
 class FakeHttp:

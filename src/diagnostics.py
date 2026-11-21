@@ -8,7 +8,7 @@ which API changed or is unreachable without running the whole pipeline.
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Callable
+from typing import Callable, Optional
 
 from src.data.climate import OpenMeteoClimateSource
 from src.data.gbif import GbifSource
@@ -31,12 +31,24 @@ def _describe(values: dict) -> str:
     return "; ".join(parts)
 
 
-def run_checks(settings: Settings, paths: Paths, location_id: str = "paris",
-               progress: Callable[[str], None] = print) -> bool:
-    """Return True when every source answered with a valid shape."""
-    location = next((l for l in load_locations(paths.locations_csv) if l.id == location_id), None)
+def pick_location(locations: list, location_id: Optional[str] = None):
+    """The requested location, or the first row of the list when none is given."""
+    if location_id is None:
+        return locations[0]
+    location = next((l for l in locations if l.id == location_id), None)
     if location is None:
         raise ValueError(f"Unknown location id: {location_id}")
+    return location
+
+
+def run_checks(settings: Settings, paths: Paths, location_id: Optional[str] = None,
+               progress: Callable[[str], None] = print) -> bool:
+    """Return True when every source answered with a valid shape.
+
+    Without `location_id` the first row of config/locations.csv is used, so no
+    city is hard-coded as the reference.
+    """
+    location = pick_location(load_locations(paths.locations_csv), location_id)
     quick = replace(settings, sample_pages=1)
     http = PoliteHttpClient(quick.user_agent, quick.host_min_interval_s, quick.request_timeout_s, max_retries=1)
     sources = [

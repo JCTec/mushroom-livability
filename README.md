@@ -5,12 +5,15 @@
 **Where is the most strategic place to live as a mushroom lover?**
 
 This project answers that question with open public data. It computes a transparent
-**Mushroom Livability Score (0–100)** for Paris, Amsterdam, 30 other European cities and
-8 Canadian benchmark cities, and presents the result in a small interactive web app and a
-LaTeX paper.
+**Mushroom Livability Score (0–100)** for 40 cities in six regions of Europe and Canada, all
+treated as peers: no city or country is singled out or used as a reference, the answer is
+whichever ranks first, and regions are listed alphabetically. The result is presented in a
+small interactive web app and a LaTeX paper.
 
-> **Executed on 2026-11-19:** Amsterdam is the better base for a mushroom lover: 60.7 vs 57.4
-> out of 100 for Paris (overall leader Berlin, 78.5; best Canadian city Vancouver, 72.3). WorldPop
+> **Executed on 2026-11-19** (presentation made location-neutral on 2026-11-21, scores unchanged):
+> Berlin (Germany) ranks first with 78.5 out of 100, ahead of Helsinki (Finland) with 74.2. Best in
+> each region: Canada — Vancouver; France & Benelux — Brussels; Germany & Central Europe — Berlin;
+> Nordics — Helsinki; Southern Europe — Trento; UK & Ireland — London. WorldPop
 > was unavailable, so the per-capita sub-metric was dropped for all locations, and the woodland
 > share is a lower bound. See [`docs/EXECUTION_LOG.md`](docs/EXECUTION_LOG.md) and
 > [`docs/KNOWN_RISKS.md`](docs/KNOWN_RISKS.md).
@@ -47,10 +50,10 @@ what the app looks like; it says nothing about real cities.
 |---|---|
 | `python main.py` | Run the pipeline if there are no results yet, then start the web app. |
 | `python main.py pipeline` | Fetch data, score, write `data/processed/results.json` and the paper fragments. |
-| `python main.py pipeline --only paris,amsterdam` | Quick partial run (scores are then relative to those cities only). |
+| `python main.py pipeline --only <id>,<id>` | Quick partial run on the listed location ids (scores are then relative to those cities only). |
 | `python main.py pipeline --clear-cache` | Throw away cached downloads and fetch everything again. |
 | `python main.py serve` | Start the web app on existing results. Options: `--port 8080`, `--no-browser`. |
-| `python main.py check` | Live smoke test: one request set per data source for Paris, cache bypassed. |
+| `python main.py check` | Live smoke test: one request set per data source for one location (`--location <id>`; default: the first row of `config/locations.csv`, currently Vancouver), cache bypassed. |
 | `python main.py paper` | Regenerate the LaTeX fragments from saved results. |
 | `python main.py site --out site` | Write a static copy of the web app (page + assets + `api/results`) for GitHub Pages. |
 | `python -m unittest discover -s tests -t .` | Run the test suite (no network needed). |
@@ -96,7 +99,8 @@ retrieval time, so the cache is a complete provenance record.
 
 One page, no build step, no external assets:
 
-- the verdict in one sentence, Paris and Amsterdam side by side with density heatmaps;
+- the verdict in one sentence (rank 1 against rank 2) and the best location of every region;
+- "Compare two locations": pick any two, side by side with density heatmaps (opens on ranks 1 and 2);
 - the full ranking with a stacked bar showing what each ingredient contributes;
 - filter by region, search by city or country;
 - a score breakdown for any location (raw values, normalised values, points);
@@ -166,7 +170,9 @@ SVG/CSS gives full control over the design with nothing to install.
 
 ## Extending
 
-- **Add a city:** add a row to `config/locations.csv`, run `python main.py pipeline`.
+- **Add a city:** add a row to `config/locations.csv` inside its region's block (rows are kept in
+  alphabetical region order; a test checks this), run `python main.py pipeline`. Row order does not
+  affect scores or ranks; it only decides the default location of `python main.py check`.
 - **Change weights or thresholds:** `src/scoring/components.py` and `src/settings.py`.
 - **Add a data source:** write a class with `info` and `fetch(location)` (see
   `src/data/sources.py`), register it in `build_sources()` in `src/pipeline.py`.

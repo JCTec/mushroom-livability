@@ -7,40 +7,41 @@
 %      macros from generated/macros.tex.
 %   3. No causal claims the data cannot support. "Is recorded more often"
 %      is fine; "has more mushrooms" is not.
-%   4. 2-4 short paragraphs: (a) what drives the Paris/Amsterdam gap,
-%      (b) what the European leaders have in common, (c) how Canada compares.
+%   4. Treat every location and region as a peer: no city or country is a
+%      reference point. 2-4 short paragraphs: (a) what separates the two
+%      highest-ranked locations, (b) what the leaders have in common,
+%      (c) how the regions compare (regions in alphabetical order).
 %   5. Then delete the placeholder paragraph below.
 %
-% Written 2026-11-19 after the full real run (results.json: synthetic=false, partial=false).
-% Every statement below can be checked against Tables~\ref{tab:h2h} and \ref{tab:ranking}.
+% Rewritten 2026-11-21 for the location-neutral presentation, on the results of the
+% 2026-11-19 real run (results.json: synthetic=false, partial=false; scores unchanged).
+% Every statement below can be checked against Tables~\ref{tab:h2h}, \ref{tab:regions} and \ref{tab:ranking}.
 
-\paragraph{Paris and Amsterdam.} The margin between \MLSHeadlineWinner{} and \MLSHeadlineLoser{} is small
-compared with the spread of the full ranking, and the two cities win on different ingredients
-(Table~\ref{tab:h2h}). \MLSHeadlineWinner{}'s lead comes mainly from observation density. Within that component,
-the iNaturalist record rates per km\textsuperscript{2} of the two cities are close; the difference lies in the
-fungal share of all records and, above all, in GBIF records per km\textsuperscript{2}, where \MLSHeadlineWinner{}
-is far ahead. GBIF depth reflects which recording schemes publish their data, so this part of the gap describes
-recording and publication effort as much as fungal life. \MLSHeadlineWinner{} also gains on species richness and
-on the climate index. \MLSHeadlineLoser{} recovers points on seasonal reliability, because its records are spread
-over more months, whereas \MLSHeadlineWinner{}'s records are concentrated in a short autumn peak. It also recovers
-points on mapped woodland.
+\paragraph{The two highest-ranked locations.} \MLSLeaderName{} and \MLSRunnerUpName{} win on different
+ingredients (Table~\ref{tab:h2h}). \MLSLeaderName{} is ahead on seasonal reliability, with every month of the
+year counted as reliable, and on species richness. \MLSRunnerUpName{} is ahead on observation density. Within
+that component the iNaturalist rates of the two cities are close; the difference lies in GBIF records per
+km\textsuperscript{2}, where \MLSRunnerUpName{} is far ahead. GBIF depth reflects which recording schemes
+publish their data, so this part of the gap describes recording and publication effort as much as fungal life.
+Climate suitability and woodland contribute similar points to both.
 
-\paragraph{The leaders.} The highest-ranked European locations (Figure~\ref{fig:contrib}) score strongly on
-at least two of the three record-based ingredients: observation density, species richness and seasonal
-reliability. Climate
-suitability does not set them apart. \MLSLeaderName{}, the overall leader, and the Nordic capital that follows it
-receive fewer climate points than most of the field, while the climate index favours the mild Atlantic locations,
-several of which rank in the lower half. Under this score, being a place where many fungi are recorded across
-many months matters more than having a favourable climate on paper. Because the leaders are large, well-observed
-cities, this pattern is consistent with the observer-effort caveat below, and the score should be read as
-``recorded fungal life'', not as abundance.
+\paragraph{The leaders.} The five highest-ranked locations come from five different regions
+(Figure~\ref{fig:contrib}, Table~\ref{tab:regions}), so no single part of the study area dominates the top of
+the ranking. What the leaders share is strength on the record-based ingredients --- observation density,
+species richness and seasonal reliability --- rather than on climate: \MLSLeaderName{} and \MLSRunnerUpName{}
+both receive fewer climate points than most of the field, while the climate index favours mild Atlantic
+locations, several of which rank in the lower half. Because the leaders are large, well-observed cities, this
+pattern is consistent with the observer-effort caveat below, and the score should be read as ``recorded fungal
+life'', not as abundance.
 
-\paragraph{Canada.} The Canadian benchmarks span almost the whole range of the ranking.
-\MLSBestBenchmarkName{} is placed at rank~\MLSBestBenchmarkRank{} overall, the two British Columbia locations hold
-the highest species-richness scores of all locations, and Ottawa also ranks among the leaders, while Calgary ranks
-last. Halifax, Montreal, Quebec City and Toronto fall in the lower half of the table, all with climate points below
-the European median. The European
-headline cities therefore sit below the best Canadian benchmarks but above most of the others.
+\paragraph{Regions.} Differences within regions are as large as differences between them
+(Table~\ref{tab:ranking}). In Canada, in France and the Benelux, and in Germany and Central Europe, the
+locations span the ranking from the top five to the bottom three, so the region a city lies in says little
+about its score. The best location of every region except Southern Europe ranks in the top five overall
+(Table~\ref{tab:regions}). The Southern European locations all rank in the middle or lower part of the table;
+their median points for observation density and species richness are the lowest of any region, while their
+median climate and seasonal-reliability points are close to the median of all locations. With citizen-science data,
+lower recording density can reflect fewer recorders as much as fewer fungi.
 
 \paragraph{Caveats specific to this run.} Two data limitations shape these results (Section~\ref{sec:coverage}).
 First, the WorldPop statistics service was unavailable, so the per-capita observation rate was dropped for all

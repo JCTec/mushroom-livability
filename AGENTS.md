@@ -88,7 +88,7 @@ The step-by-step procedure is `docs/RUNBOOK.md`. Follow it in order.
 | A **required** source stays broken (iNaturalist stats, Open-Meteo) | Stop. Report what was tried. Do not produce results. |
 | A source fails for a few locations only (transient) | Re-run `python main.py pipeline`; successful responses are cached, only the failures are retried. Up to 3 re-runs, waiting a few minutes between them. |
 | HTTP 429 / rate limiting | Wait, then re-run. Increase the host interval in `src/settings.py` if it recurs. Never decrease it. |
-| A headline city (Paris or Amsterdam) is unscored | The deliverable is incomplete. Treat as a required-source failure for that city: retry, then stop and report. |
+| Any location is unscored | All locations are peers; none is optional. Retry (transient row above), then report the unscored locations plainly in the log and the final report. |
 | Results look implausible (e.g. a count of 0 for a major city, identical values everywhere) | Inspect the cached response in `data/cache/<host>/`. If the request was wrong, fix the adapter and delete that host's cache folder. If the data is real, keep it — surprising is not wrong. |
 | A web checklist item fails | Fix in `src/app/` (or the payload builder it reads), re-test the whole checklist. |
 | LaTeX is not installed | Do not install system software without asking the user. Report the paper as "fragments generated, PDF not built". |
@@ -98,7 +98,7 @@ The step-by-step procedure is `docs/RUNBOOK.md`. Follow it in order.
 
 - [ ] `python -m unittest discover -s tests -t .` → OK
 - [ ] `python main.py check` → all sources OK, or failures documented as optional-source limitations
-- [ ] `python main.py pipeline` (no `--demo`, no `--only`) completed; Paris and Amsterdam both scored
+- [ ] `python main.py pipeline` (no `--demo`, no `--only`) completed; unscored locations (if any) reported
 - [ ] `results.json` has `"synthetic": false` and `"partial": false`
 - [ ] Sanity checks in the runbook pass
 - [ ] Every item of the web page test checklist passes on the real results, with screenshots
@@ -110,7 +110,7 @@ The step-by-step procedure is `docs/RUNBOOK.md`. Follow it in order.
 
 ## 8. Final report format
 
-1. **Answer** — the verdict sentence from the app, plus the overall leader and best Canadian city.
+1. **Answer** — the verdict sentence from the app (rank 1 vs rank 2) and the best location of each region, regions in alphabetical order. No location or country is singled out.
 2. **What ran** — commands, duration, number of requests cached per provider.
 3. **Coverage** — exclusions, unscored locations, failed requests.
 4. **Changes made** — file, what, why, which test covers it. "None" if none.

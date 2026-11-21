@@ -11,11 +11,14 @@ fungi of many kinds close to home.
 
 A **location** is the disc of radius **25 km** around a city centre (≈ 1,963 km²): what is
 reachable on a half-day outing. All quantities refer to that disc. Coordinates are in
-`config/locations.csv`.
+`config/locations.csv` (rows ordered by region, alphabetically; order has no effect on scores).
 
-40 locations: Paris and Amsterdam (headline), 30 further European cities across France &
-Benelux, Germany & Central Europe, the Nordics, UK & Ireland and Southern Europe, and 8
-Canadian cities (benchmark).
+40 locations in six regions (`group` column): Canada (8), France & Benelux (7), Germany &
+Central Europe (9), Nordics (5), Southern Europe (8) and UK & Ireland (3). All locations are
+peers: there are no headline or benchmark roles, no location is compared against a chosen
+reference, and regions are listed alphabetically. (Until 2026-11-21 the presentation singled out
+Paris and Amsterdam as "headline" cities and the Canadian cities as "benchmarks"; that framing
+was removed at the user's request. It never entered the scoring, so scores and ranks did not change.)
 
 ## From raw data to metrics
 
@@ -89,10 +92,12 @@ The model is declared in `src/scoring/components.py`; parameters in `src/setting
 
 For every location the output contains, per component: effective weight, normalised value,
 points contributed; and per sub-metric: raw value, unit, normalised value, weight. The
-identity `score = Σ contributions` is enforced by tests. The verdict sentence names the
-component with the largest advantage for the winner and, if there is one of at least one
-point, the largest advantage for the loser. A margin below one point is reported as "too
-close to call".
+identity `score = Σ contributions` is enforced by tests. The verdict compares the location
+ranked first with the location ranked second; it is chosen by score alone. The sentence names
+the component with the largest advantage for the first and, if there is one of at least one
+point, the largest advantage for the second. A margin below one point is reported as "too
+close to call". The verdict also lists the best-ranked location of every region. The web app
+lets the reader compare any two locations with the same breakdown.
 
 ## Missing data (coverage rules)
 
@@ -109,7 +114,7 @@ Everything dropped is reported in the app ("Coverage notes"), in the paper and i
 
 The maps show the coordinates of the most recently added research-grade records (at most
 400 per location) binned into a 24 × 24 grid over the disc's bounding box. They show
-**where finds cluster**, not totals — both headline cities are capped at the same sample
+**where finds cluster**, not totals — every location is capped at the same sample
 size, and each map is scaled to its own maximum. They do not enter the score.
 
 ## Limitations (read before quoting a result)

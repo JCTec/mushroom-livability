@@ -60,4 +60,4 @@ locations and reports it. That is an acceptable, documented outcome.
 |---|---|---|---|
 | P1 | Bibliographic details of the eight references were written from memory | ✅ 2026-11-19: ERA5, Boddy, Isaac & Pocock match Crossref; Open-Meteo matches the provider's recommended citation; the four data-provider entries are web resources — no change needed | verify each (runbook step 9); correct or remove |
 | P2 | `interpretation.tex` contains only a neutral placeholder | ✅ 2026-11-19 written from the real results | written in runbook step 9 from real results |
-| P3 | The title says "thirty other European cities and eight Canadian benchmarks" | 🧪 | matches `config/locations.csv` (2 + 30 + 8); update if the list changes |
+| P3 | The introduction of `paper.tex` names the six regions by hand (the title's city count is the `\MLSNumLocations` macro) | ✅ 2026-11-21 matches the `group` column of `config/locations.csv`; update if regions change | — |
